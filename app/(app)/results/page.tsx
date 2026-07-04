@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState, Suspense } from 'react'
-import { useSearchParams, useRouter } from 'next/navigation'
+import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { format } from 'date-fns'
 import ReactMarkdown from 'react-markdown'
@@ -11,27 +11,30 @@ import { Button } from '@/components/ui/button'
 import { AppHeader } from '@/components/app/header'
 import { StatusBadge } from '@/components/app/status-badge'
 import { useExecutionStore } from '@/lib/store/execution-store'
-import { MOCK_EXECUTIONS } from '@/lib/mock-data'
+import { api } from '@/lib/api'
+import type { Execution } from '@/lib/store/execution-store'
 
 function ResultsContent() {
   const searchParams = useSearchParams()
-  const router = useRouter()
   const id = searchParams.get('id')
-  const { executions, currentExecution, setExecutions, setCurrentExecution } = useExecutionStore()
+  const { currentExecution, setCurrentExecution } = useExecutionStore()
   const [copied, setCopied] = useState(false)
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    if (!executions.length) setExecutions(MOCK_EXECUTIONS)
-  }, [executions.length, setExecutions])
+    if (!id) { setLoading(false); return }
+    if (currentExecution?.id === id) { setLoading(false); return }
+    api<{ execution: Execution }>(`/api/executions/${id}`)
+      .then((data) => setCurrentExecution(data.execution))
+      .catch(() => setCurrentExecution(null))
+      .finally(() => setLoading(false))
+  }, [id, currentExecution?.id, setCurrentExecution])
 
-  useEffect(() => {
-    if (id && executions.length) {
-      const found = executions.find((e) => e.id === id)
-      if (found) setCurrentExecution(found)
-    }
-  }, [id, executions, setCurrentExecution])
+  const exec = currentExecution?.id === id ? currentExecution : null
 
-  const exec = currentExecution ?? executions.find((e) => e.id === id) ?? executions[0]
+  if (loading) {
+    return <div className="p-6 text-muted-foreground text-sm">Loading execution…</div>
+  }
 
   if (!exec) {
     return (

@@ -10,8 +10,8 @@ import { Eye, EyeOff, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { useAuthStore } from '@/lib/store/auth-store'
-import { MOCK_USER, MOCK_ADMIN } from '@/lib/mock-data'
+import { useAuthStore, type User } from '@/lib/store/auth-store'
+import { api } from '@/lib/api'
 
 const schema = z.object({
   email: z.string().email('Enter a valid email'),
@@ -21,7 +21,7 @@ type FormData = z.infer<typeof schema>
 
 export default function LoginPage() {
   const router = useRouter()
-  const { setUser, setToken } = useAuthStore()
+  const { setUser } = useAuthStore()
   const [showPw, setShowPw] = useState(false)
   const [error, setError] = useState('')
 
@@ -33,18 +33,19 @@ export default function LoginPage() {
 
   const onSubmit = async (data: FormData) => {
     setError('')
-    await new Promise((r) => setTimeout(r, 1000))
-    // Mock auth — admin@flowai.dev → admin, any other → user
-    if (data.email === 'admin@flowai.dev') {
-      setUser(MOCK_ADMIN)
-      setToken('mock-admin-token')
-      router.push('/admin')
-    } else if (data.email.includes('@')) {
-      setUser({ ...MOCK_USER, email: data.email })
-      setToken('mock-user-token')
-      router.push('/dashboard')
-    } else {
-      setError('Invalid credentials. Try any email and 6+ char password.')
+    try {
+      const { user } = await api<{ user: User }>('/api/login', {
+        method: 'POST',
+        body: JSON.stringify(data),
+      })
+      setUser(user)
+      if (!user.emailVerified) {
+        router.push(`/verify-email?email=${encodeURIComponent(user.email)}`)
+      } else {
+        router.push(user.role === 'admin' ? '/admin' : '/dashboard')
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Sign-in failed. Please try again.')
     }
   }
 
@@ -116,12 +117,6 @@ export default function LoginPage() {
           )}
         </Button>
       </form>
-
-      <div className="mt-4 p-3 rounded-lg bg-muted/40 border border-border/40">
-        <p className="text-xs text-muted-foreground text-center mb-1">Demo credentials</p>
-        <p className="text-xs text-center"><span className="text-foreground font-mono">admin@flowai.dev</span> → Admin dashboard</p>
-        <p className="text-xs text-center"><span className="text-foreground font-mono">any@email.com</span> → User dashboard</p>
-      </div>
 
       <p className="mt-6 text-sm text-center text-muted-foreground">
         Don&apos;t have an account?{' '}

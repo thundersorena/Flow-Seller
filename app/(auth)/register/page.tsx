@@ -10,8 +10,8 @@ import { Eye, EyeOff, Loader2, Check } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { useAuthStore } from '@/lib/store/auth-store'
-import { MOCK_USER } from '@/lib/mock-data'
+import { useAuthStore, type User } from '@/lib/store/auth-store'
+import { api } from '@/lib/api'
 
 const schema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters'),
@@ -27,8 +27,9 @@ type FormData = z.infer<typeof schema>
 
 export default function RegisterPage() {
   const router = useRouter()
-  const { setUser, setToken } = useAuthStore()
+  const { setUser } = useAuthStore()
   const [showPw, setShowPw] = useState(false)
+  const [error, setError] = useState('')
 
   const {
     register,
@@ -45,10 +46,17 @@ export default function RegisterPage() {
   }
 
   const onSubmit = async (data: FormData) => {
-    await new Promise((r) => setTimeout(r, 1200))
-    setUser({ ...MOCK_USER, name: data.name, email: data.email })
-    setToken('mock-user-token')
-    router.push('/verify-email')
+    setError('')
+    try {
+      const { user } = await api<{ user: User }>('/api/register', {
+        method: 'POST',
+        body: JSON.stringify({ name: data.name, email: data.email, password: data.password }),
+      })
+      setUser(user)
+      router.push(`/verify-email?email=${encodeURIComponent(user.email)}`)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Registration failed. Please try again.')
+    }
   }
 
   return (
@@ -57,6 +65,12 @@ export default function RegisterPage() {
         <h1 className="text-2xl font-bold mb-1">Create your account</h1>
         <p className="text-sm text-muted-foreground">Start automating with AI in minutes</p>
       </div>
+
+      {error && (
+        <div className="mb-4 px-4 py-3 rounded-lg bg-destructive/10 border border-destructive/30 text-sm text-destructive">
+          {error}
+        </div>
+      )}
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         <div className="space-y-1.5">

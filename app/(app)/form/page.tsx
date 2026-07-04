@@ -1,27 +1,30 @@
 'use client'
 
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useEffect, useState, Suspense } from 'react'
+import Link from 'next/link'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod/v3'
-import { ChevronRight, ChevronLeft, Loader2, CheckCircle, Zap } from 'lucide-react'
+import { ChevronRight, ChevronLeft, Loader2, CheckCircle, Zap, Lock } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { AppHeader } from '@/components/app/header'
 import { useExecutionStore } from '@/lib/store/execution-store'
-import { MOCK_EXECUTIONS } from '@/lib/mock-data'
+import { api } from '@/lib/api'
 import { cn } from '@/lib/utils'
+import type { Execution } from '@/lib/store/execution-store'
 
-const WORKFLOWS = [
-  { id: 'content-generator', name: 'Content Generator', desc: 'Generate blog posts, social copy, and marketing content.', model: 'GPT-4o' },
-  { id: 'data-analyzer', name: 'Data Analyzer', desc: 'Analyze datasets and extract structured insights.', model: 'Claude 3.5 Sonnet' },
-  { id: 'email-drafter', name: 'Email Drafter', desc: 'Write professional emails and follow-ups.', model: 'GPT-4o-mini' },
-  { id: 'report-builder', name: 'Report Builder', desc: 'Build comprehensive reports from raw inputs.', model: 'Gemini 1.5 Pro' },
-  { id: 'seo-optimizer', name: 'SEO Optimizer', desc: 'Optimize content for search engine ranking.', model: 'GPT-4o' },
-]
+interface RunnableFlow {
+  id: string
+  slug: string
+  name: string
+  description: string
+  priceCents: number
+  owned: boolean
+}
 
 const TONES = ['Professional', 'Casual', 'Technical', 'Creative', 'Persuasive']
 const LENGTHS = [
@@ -34,19 +37,23 @@ const step2Schema = z.object({
   topic: z.string().min(5, 'Topic must be at least 5 characters'),
   context: z.string().min(10, 'Please provide at least 10 characters of context'),
   tone: z.string().min(1, 'Select a tone'),
-  length: z.string().min(1, 'Select a length'),
+  length: z.enum(['short', 'medium', 'long']),
   additionalInstructions: z.string().optional(),
 })
 type Step2Data = z.infer<typeof step2Schema>
 
-const STEPS = ['Choose Workflow', 'Configure Input', 'Review & Submit']
+const STEPS = ['Choose Flow', 'Configure Input', 'Run']
 
-export default function FormPage() {
+function FormContent() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const { setCurrentExecution, addExecution } = useExecutionStore()
+  const [flows, setFlows] = useState<RunnableFlow[]>([])
+  const [loadingFlows, setLoadingFlows] = useState(true)
   const [step, setStep] = useState(0)
-  const [selectedWorkflow, setSelectedWorkflow] = useState<typeof WORKFLOWS[0] | null>(null)
+  const [selectedFlow, setSelectedFlow] = useState<RunnableFlow | null>(null)
   const [submitting, setSubmitting] = useState(false)
+  const [runError, setRunError] = useState('')
 
   const { register, handleSubmit, watch, setValue, formState: { errors } } = useForm<Step2Data>({
     resolver: zodResolver(step2Schema),
@@ -55,32 +62,48 @@ export default function FormPage() {
 
   const formData = watch()
 
-  const handleWorkflowSelect = (wf: typeof WORKFLOWS[0]) => {
-    setSelectedWorkflow(wf)
+  useEffect(() => {
+    api<{ flows: RunnableFlow[] }>('/api/flows')
+      .then((data) => {
+        setFlows(data.flows)
+        const preselect = searchParams.get('flow')
+        if (preselect) {
+          const flow = data.flows.find((f) => f.id === preselect || f.slug === preselect)
+          if (flow?.owned) {
+            setSelectedFlow(flow)
+            setStep(1)
+          }
+        }
+      })
+      .catch(() => setFlows([]))
+      .finally(() => setLoadingFlows(false))
+  }, [searchParams])
+
+  const handleFlowSelect = (flow: RunnableFlow) => {
+    if (!flow.owned) return
+    setSelectedFlow(flow)
     setStep(1)
   }
 
   const onSubmit = async (data: Step2Data) => {
+    if (!selectedFlow) return
     setStep(2)
     setSubmitting(true)
-    await new Promise((r) => setTimeout(r, 2500))
+    setRunError('')
 
-    const execution = {
-      ...MOCK_EXECUTIONS[0],
-      id: `exec_${Date.now()}`,
-      workflowName: selectedWorkflow?.name ?? 'Custom Workflow',
-      modelName: selectedWorkflow?.model ?? 'GPT-4o',
-      input: { ...data },
-      status: 'success' as const,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-      tokensUsed: Math.floor(Math.random() * 2000) + 800,
-      executionTime: Math.floor(Math.random() * 4000) + 1500,
+    try {
+      const { execution } = await api<{ execution: Execution }>('/api/executions', {
+        method: 'POST',
+        body: JSON.stringify({ flowId: selectedFlow.id, ...data }),
+      })
+      setCurrentExecution(execution)
+      addExecution(execution)
+      setSubmitting(false)
+      router.push(`/results?id=${execution.id}`)
+    } catch (err) {
+      setSubmitting(false)
+      setRunError(err instanceof Error ? err.message : 'Automation failed. Please try again.')
     }
-    setCurrentExecution(execution)
-    addExecution(execution)
-    setSubmitting(false)
-    router.push(`/results?id=${execution.id}`)
   }
 
   return (
@@ -106,32 +129,53 @@ export default function FormPage() {
           ))}
         </div>
 
-        {/* Step 0: Choose Workflow */}
+        {/* Step 0: Choose Flow */}
         {step === 0 && (
           <div>
-            <h2 className="text-xl font-semibold mb-2">Choose a workflow</h2>
-            <p className="text-sm text-muted-foreground mb-6">Select the AI automation you want to run.</p>
+            <h2 className="text-xl font-semibold mb-2">Choose a flow</h2>
+            <p className="text-sm text-muted-foreground mb-6">Select one of your unlocked n8n flows to run.</p>
+
+            {loadingFlows && <p className="text-sm text-muted-foreground">Loading flows…</p>}
+
             <div className="grid gap-3">
-              {WORKFLOWS.map((wf) => (
+              {flows.map((flow) => (
                 <button
-                  key={wf.id}
-                  onClick={() => handleWorkflowSelect(wf)}
-                  className="flex items-start gap-4 p-5 rounded-2xl border border-border/60 bg-card hover:border-brand/40 hover:bg-brand/5 transition-all text-left group"
+                  key={flow.id}
+                  onClick={() => handleFlowSelect(flow)}
+                  disabled={!flow.owned}
+                  className={cn(
+                    'flex items-start gap-4 p-5 rounded-2xl border text-left group transition-all',
+                    flow.owned
+                      ? 'border-border/60 bg-card hover:border-brand/40 hover:bg-brand/5'
+                      : 'border-border/40 bg-card/50 opacity-70 cursor-not-allowed'
+                  )}
                 >
-                  <div className="w-10 h-10 rounded-xl bg-brand/10 flex items-center justify-center shrink-0 group-hover:bg-brand/20 transition-colors">
-                    <Zap className="w-5 h-5 text-brand" />
+                  <div className={cn(
+                    'w-10 h-10 rounded-xl flex items-center justify-center shrink-0 transition-colors',
+                    flow.owned ? 'bg-brand/10 group-hover:bg-brand/20' : 'bg-muted'
+                  )}>
+                    {flow.owned ? <Zap className="w-5 h-5 text-brand" /> : <Lock className="w-5 h-5 text-muted-foreground" />}
                   </div>
                   <div className="flex-1">
                     <div className="flex items-center justify-between">
-                      <p className="font-medium">{wf.name}</p>
-                      <span className="text-xs bg-muted text-muted-foreground px-2 py-0.5 rounded-full font-mono">{wf.model}</span>
+                      <p className="font-medium">{flow.name}</p>
+                      {!flow.owned && (
+                        <span className="text-xs bg-muted text-muted-foreground px-2 py-0.5 rounded-full">Locked</span>
+                      )}
                     </div>
-                    <p className="text-sm text-muted-foreground mt-0.5">{wf.desc}</p>
+                    <p className="text-sm text-muted-foreground mt-0.5">{flow.description}</p>
                   </div>
-                  <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-brand transition-colors mt-1 shrink-0" />
+                  {flow.owned && <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-brand transition-colors mt-1 shrink-0" />}
                 </button>
               ))}
             </div>
+
+            {!loadingFlows && flows.every((f) => !f.owned) && (
+              <div className="mt-6 p-4 rounded-xl bg-brand/5 border border-brand/20 text-sm">
+                You haven&apos;t unlocked any flows yet.{' '}
+                <Link href="/flows" className="text-brand underline">Visit the Flows Store</Link> to purchase one.
+              </div>
+            )}
           </div>
         )}
 
@@ -143,8 +187,8 @@ export default function FormPage() {
                 <Zap className="w-4 h-4 text-brand" />
               </div>
               <div>
-                <p className="font-medium text-sm">{selectedWorkflow?.name}</p>
-                <p className="text-xs text-muted-foreground">Model: {selectedWorkflow?.model}</p>
+                <p className="font-medium text-sm">{selectedFlow?.name}</p>
+                <p className="text-xs text-muted-foreground">Powered by OpenAI</p>
               </div>
             </div>
 
@@ -189,7 +233,7 @@ export default function FormPage() {
                     <button
                       key={l.value}
                       type="button"
-                      onClick={() => setValue('length', l.value)}
+                      onClick={() => setValue('length', l.value as Step2Data['length'])}
                       className={cn(
                         'p-3 rounded-xl border text-left transition-all',
                         formData.length === l.value
@@ -215,13 +259,13 @@ export default function FormPage() {
                 <ChevronLeft className="w-4 h-4" /> Back
               </Button>
               <Button type="submit" className="flex-1 bg-brand text-white hover:bg-brand/90 border-0 gap-1.5">
-                Review & Submit <ChevronRight className="w-4 h-4" />
+                Run automation <ChevronRight className="w-4 h-4" />
               </Button>
             </div>
           </form>
         )}
 
-        {/* Step 2: Submitting */}
+        {/* Step 2: Running */}
         {step === 2 && (
           <div className="text-center py-12">
             {submitting ? (
@@ -231,16 +275,22 @@ export default function FormPage() {
                 </div>
                 <h2 className="text-xl font-semibold mb-2">Running your automation…</h2>
                 <p className="text-sm text-muted-foreground mb-6">
-                  Triggering <span className="text-foreground font-medium">{selectedWorkflow?.name}</span> via n8n webhook.<br />
+                  Running <span className="text-foreground font-medium">{selectedFlow?.name}</span>.<br />
                   The AI is processing your request.
                 </p>
-                <div className="max-w-xs mx-auto space-y-2">
-                  {['Sending to n8n webhook', 'AI model processing', 'Generating output'].map((step, i) => (
-                    <div key={step} className="flex items-center gap-3 text-sm text-left">
-                      <div className="w-5 h-5 rounded-full border-2 border-brand border-t-transparent animate-spin shrink-0" style={{ animationDelay: `${i * 0.3}s` }} />
-                      <span className="text-muted-foreground">{step}</span>
-                    </div>
-                  ))}
+              </>
+            ) : runError ? (
+              <>
+                <div className="w-20 h-20 rounded-2xl bg-destructive/10 border border-destructive/20 flex items-center justify-center mx-auto mb-6">
+                  <Zap className="w-10 h-10 text-destructive" />
+                </div>
+                <h2 className="text-xl font-semibold mb-2">Automation failed</h2>
+                <p className="text-sm text-destructive mb-6">{runError}</p>
+                <div className="flex justify-center gap-3">
+                  <Button variant="outline" onClick={() => setStep(1)}>Try again</Button>
+                  <Link href="/flows">
+                    <Button className="bg-brand text-white hover:bg-brand/90 border-0">Buy tokens / upgrade</Button>
+                  </Link>
                 </div>
               </>
             ) : (
@@ -256,5 +306,13 @@ export default function FormPage() {
         )}
       </div>
     </div>
+  )
+}
+
+export default function FormPage() {
+  return (
+    <Suspense fallback={<div className="p-6 text-muted-foreground text-sm">Loading…</div>}>
+      <FormContent />
+    </Suspense>
   )
 }

@@ -8,17 +8,27 @@ export interface User {
   name: string
   email: string
   role: UserRole
-  avatar?: string
+  status?: 'active' | 'suspended'
   emailVerified: boolean
+  planId?: string | null
+  bonusTokens?: number
   createdAt: string
+}
+
+export interface Allowance {
+  plan: { id: string; name: string; dailyTokenLimit: number } | null
+  dailyLimit: number
+  usedToday: number
+  bonusTokens: number
+  remaining: number
 }
 
 interface AuthState {
   user: User | null
-  token: string | null
+  allowance: Allowance | null
   isLoading: boolean
   setUser: (user: User | null) => void
-  setToken: (token: string | null) => void
+  setAllowance: (allowance: Allowance | null) => void
   setLoading: (loading: boolean) => void
   logout: () => void
 }
@@ -27,16 +37,16 @@ export const useAuthStore = create<AuthState>()(
   persist(
     (set) => ({
       user: null,
-      token: null,
+      allowance: null,
       isLoading: false,
       setUser: (user) => set({ user }),
-      setToken: (token) => set({ token }),
+      setAllowance: (allowance) => set({ allowance }),
       setLoading: (isLoading) => set({ isLoading }),
-      logout: () => set({ user: null, token: null }),
+      logout: () => set({ user: null, allowance: null }),
     }),
     {
       name: 'flowai-auth',
-      partialize: (state) => ({ user: state.user, token: state.token }),
+      partialize: (state) => ({ user: state.user }),
     }
   )
 )
