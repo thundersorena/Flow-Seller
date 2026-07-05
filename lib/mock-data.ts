@@ -10,14 +10,14 @@ export const MOCK_USER: User = {
   createdAt: '2024-01-15T10:00:00Z',
 }
 
-export const MOCK_ADMIN: User = {
-  id: 'usr_admin',
-  name: 'Jordan Lee',
-  email: 'admin@flowai.dev',
-  role: 'admin',
-  emailVerified: true,
-  createdAt: '2023-12-01T10:00:00Z',
-}
+// export const MOCK_ADMIN: User = {
+//   id: 'usr_admin',
+//   name: 'Jordan Lee',
+//   email: 'admin@flowai.dev',
+//   role: 'admin',
+//   emailVerified: true,
+//   createdAt: '2023-12-01T10:00:00Z',
+// }
 
 const OUTPUTS = [
   `## AI-Generated Content Report
@@ -77,7 +77,7 @@ export const MOCK_USERS: (User & { tokensUsed: number; executions: number; statu
   { id: 'usr_03', name: 'Morgan Davis', email: 'morgan@startup.io', role: 'user', emailVerified: false, createdAt: '2024-03-10T10:00:00Z', tokensUsed: 5400, executions: 11, status: 'pending' },
   { id: 'usr_04', name: 'Taylor Kim', email: 'taylor@corp.net', role: 'user', emailVerified: true, createdAt: '2024-01-28T10:00:00Z', tokensUsed: 89000, executions: 201, status: 'active' },
   { id: 'usr_05', name: 'Casey Wu', email: 'casey@design.co', role: 'user', emailVerified: true, createdAt: '2024-04-05T10:00:00Z', tokensUsed: 12300, executions: 28, status: 'suspended' },
-  { ...MOCK_ADMIN, tokensUsed: 112000, executions: 350, status: 'active' },
+  // { ...MOCK_ADMIN, tokensUsed: 112000, executions: 350, status: 'active' },
 ]
 
 export const ANALYTICS = {

@@ -11,7 +11,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useAuthStore } from '@/lib/store/auth-store'
-import { registerAction } from '@/lib/auth/actions'
+import type { SafeUser } from '@/src/schema'
 
 const schema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters'),
@@ -31,39 +31,31 @@ export default function RegisterPage() {
   const [showPw, setShowPw] = useState(false)
   const [serverError, setServerError] = useState('')
 
-  const {
-    register,
-    handleSubmit,
-    watch,
-    formState: { errors, isSubmitting },
-  } = useForm<FormData>({ resolver: zodResolver(schema) })
+  const { register, handleSubmit, watch, formState: { errors, isSubmitting } } =
+    useForm<FormData>({ resolver: zodResolver(schema) })
 
   const pw = watch('password', '')
-  const checks = {
-    length: pw.length >= 8,
-    upper: /[A-Z]/.test(pw),
-    number: /[0-9]/.test(pw),
-  }
+  const checks = { length: pw.length >= 8, upper: /[A-Z]/.test(pw), number: /[0-9]/.test(pw) }
 
   const onSubmit = async (data: FormData) => {
     setServerError('')
-    const fd = new globalThis.FormData()
-    fd.set('name', data.name)
-    fd.set('email', data.email)
-    fd.set('password', data.password)
+    const res = await fetch('/api/auth/register', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: data.name, email: data.email, password: data.password }),
+    })
+    const result = await res.json() as { user?: SafeUser; error?: string }
 
-    const result = await registerAction(fd)
-    if ('error' in result && result.error) {
-      setServerError(result.error)
+    if (!res.ok || result.error) {
+      setServerError(result.error ?? 'Registration failed')
       return
     }
-    if ('user' in result && result.user) {
-      const u = result.user
-      const createdAt = u.createdAt instanceof Date ? u.createdAt.toISOString() : String(u.createdAt)
-      setUser({ id: u.id, name: u.name, email: u.email, role: u.role, emailVerified: u.emailVerified, createdAt })
-      setToken('session')
-      router.push('/verify-email')
-    }
+
+    const u = result.user!
+    const createdAt = u.createdAt instanceof Date ? u.createdAt.toISOString() : String(u.createdAt)
+    setUser({ id: u.id, name: u.name, email: u.email, role: u.role, emailVerified: u.emailVerified, createdAt })
+    setToken('session')
+    router.push('/verify-email')
   }
 
   return (
@@ -88,21 +80,19 @@ export default function RegisterPage() {
 
         <div className="space-y-1.5">
           <Label htmlFor="email">Work email</Label>
-          <Input id="email" type="email" placeholder="you@company.com" autoComplete="email" {...register('email')} />
+          <Input id="email" type="email" placeholder="you@company.com"
+            autoComplete="email" {...register('email')} />
           {errors.email && <p className="text-xs text-destructive">{errors.email.message}</p>}
         </div>
 
         <div className="space-y-1.5">
           <Label htmlFor="password">Password</Label>
           <div className="relative">
-            <Input
-              id="password"
-              type={showPw ? 'text' : 'password'}
-              placeholder="Create a strong password"
-              autoComplete="new-password"
-              {...register('password')}
-            />
-            <button type="button" onClick={() => setShowPw(!showPw)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground">
+            <Input id="password" type={showPw ? 'text' : 'password'}
+              placeholder="Create a strong password" autoComplete="new-password"
+              {...register('password')} />
+            <button type="button" onClick={() => setShowPw(!showPw)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
               {showPw ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
             </button>
           </div>
@@ -120,12 +110,8 @@ export default function RegisterPage() {
         </div>
 
         <div className="flex items-start gap-2.5">
-          <input
-            type="checkbox"
-            id="agree"
-            {...register('agree')}
-            className="mt-0.5 w-4 h-4 rounded border-border accent-brand"
-          />
+          <input type="checkbox" id="agree" {...register('agree')}
+            className="mt-0.5 w-4 h-4 rounded border-border accent-brand" />
           <Label htmlFor="agree" className="text-sm text-muted-foreground cursor-pointer leading-relaxed">
             I agree to the{' '}
             <Link href="#" className="text-brand hover:underline">Terms of Service</Link>
@@ -135,8 +121,11 @@ export default function RegisterPage() {
         </div>
         {errors.agree && <p className="text-xs text-destructive">{errors.agree.message}</p>}
 
-        <Button type="submit" className="w-full bg-brand text-white hover:bg-brand/90 border-0" disabled={isSubmitting}>
-          {isSubmitting ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Creating account…</> : 'Create account'}
+        <Button type="submit" className="w-full bg-brand text-white hover:bg-brand/90 border-0"
+          disabled={isSubmitting}>
+          {isSubmitting
+            ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Creating account…</>
+            : 'Create account'}
         </Button>
       </form>
 
