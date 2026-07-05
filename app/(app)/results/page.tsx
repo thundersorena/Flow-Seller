@@ -107,7 +107,7 @@ function ResultsContent() {
               <h2 className="font-semibold text-sm">AI-Generated Output</h2>
               <span className="text-xs text-muted-foreground">{format(new Date(exec.createdAt), 'MMM d, yyyy HH:mm:ss')}</span>
             </div>
-            <div className="p-5 prose prose-sm dark:prose-invert max-w-none overflow-auto max-h-[600px]
+            <div className="p-5 prose prose-sm dark:prose-invert max-w-none overflow-auto max-h-150
               prose-headings:font-semibold prose-headings:text-foreground
               prose-p:text-muted-foreground prose-p:leading-relaxed
               prose-code:text-brand prose-code:bg-brand/10 prose-code:px-1 prose-code:rounded

@@ -5,9 +5,15 @@ import { users } from '@/src/schema'
 import { sendOTP } from '@/lib/auth/otp'
 
 export async function POST(req: NextRequest) {
-  const { email } = await req.json() as { email?: string }
+ let email: string | undefined
+   try { 
+    ({ email } = (await req.json()) as { email?: string })
+  } catch {
+    return NextResponse.json({ error: 'Invalid request body' }, { status: 400 })
+  }
+  
   if (!email) return NextResponse.json({ error: 'Email is required' }, { status: 400 })
-
+  
   const normalised = email.toLowerCase().trim()
 
   // Look up user — but always return success to prevent email enumeration

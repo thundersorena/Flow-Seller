@@ -15,8 +15,11 @@ export async function POST(req: NextRequest) {
   if (!email || !code || !newPassword) {
     return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
   }
-  if (newPassword.length < 8) {
-    return NextResponse.json({ error: 'Password must be at least 8 characters' }, { status: 400 })
+  if (newPassword.length < 8 || !/[A-Z]/.test(newPassword) || !/[0-9]/.test(newPassword)) {
+    return NextResponse.json(
+      { error: 'Password must be at least 8 characters and contain an uppercase letter and a number' },
+      { status: 400 }
+    )
   }
 
   const normalised = email.toLowerCase().trim()

@@ -53,6 +53,7 @@ export const verificationTokens = pgTable('verification_tokens', {
   id:        uuid('id').defaultRandom().primaryKey(),
   email:     text('email').notNull(),
   token:     text('token').notNull(),
+  attempts:  integer('attempts').default(0).notNull(),
   expiresAt: timestamp('expires_at').notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
 });

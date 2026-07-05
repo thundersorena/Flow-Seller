@@ -13,10 +13,13 @@ const pool = new Pool({
 });
 const db = drizzle(pool);
 
+
+if (!process.env.SEED_ADMIN_PASSWORD) throw new Error('SEED_ADMIN_PASSWORD is not set');
+
 const ADMIN = {
   name:     'Admin',
-  email:    'admin@flowai.dev',
-  password: 'Admin@1234',
+  email:    process.env.SEED_ADMIN_EMAIL ?? 'admin@flowai.dev',
+  password: process.env.SEED_ADMIN_PASSWORD,
   role:     'admin' as const,
 };
 

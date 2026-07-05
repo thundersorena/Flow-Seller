@@ -17,7 +17,7 @@ export default function VerifyEmailPage() {
   const [resending, setResending] = useState(false)
   const inputRefs = useRef<(HTMLInputElement | null)[]>([])
 
-  useEffect(() => { inputRefs.current[0]?.focus() }, [])
+  // useEffect(() => { inputRefs.current[0]?.focus() }, [])
 
   // On mount: send the OTP (also handles direct navigation to this page)
   useEffect(() => {
