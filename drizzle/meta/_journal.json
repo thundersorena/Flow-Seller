@@ -15,6 +15,13 @@
       "when": 1783241972925,
       "tag": "0001_mysterious_joystick",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1783244470706,
+      "tag": "0002_marketplace_tables",
+      "breakpoints": true
     }
   ]
 }

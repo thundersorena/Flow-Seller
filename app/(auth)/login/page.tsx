@@ -21,7 +21,7 @@ type FormData = z.infer<typeof schema>;
 
 export default function LoginPage() {
   const router = useRouter();
-  const { setUser, setToken } = useAuthStore();
+  const { setUser } = useAuthStore();
   const [showPw, setShowPw] = useState(false);
   const [error, setError] = useState("");
 
@@ -64,7 +64,6 @@ export default function LoginPage() {
       emailVerified: u.emailVerified,
       createdAt,
     });
-    setToken("session");
 
     if (!u.emailVerified) router.push("/verify-email");
     else if (u.role === "admin") router.push("/admin");

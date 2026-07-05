@@ -29,7 +29,7 @@ type FormData = z.infer<typeof schema>;
 
 export default function RegisterPage() {
   const router = useRouter();
-  const { setUser, setToken } = useAuthStore();
+  const { setUser } = useAuthStore();
   const [showPw, setShowPw] = useState(false);
   const [serverError, setServerError] = useState("");
 
@@ -90,7 +90,6 @@ export default function RegisterPage() {
       emailVerified: u.emailVerified,
       createdAt,
     });
-    setToken("session");
     router.push("/verify-email");
   };
 
