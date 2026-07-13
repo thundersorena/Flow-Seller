@@ -11,8 +11,6 @@ import { StatCard } from '@/components/app/stat-card'
 import { StatusBadge } from '@/components/app/status-badge'
 import { useAuthStore } from '@/lib/store/auth-store'
 import { useExecutionStore } from '@/lib/store/execution-store'
-import { MOCK_EXECUTIONS } from '@/lib/mock-data'
-import type { Execution } from '@/lib/store/execution-store'
 
 export default function DashboardPage() {
   const router = useRouter()
@@ -23,7 +21,10 @@ export default function DashboardPage() {
 
   useEffect(() => {
     if (!user) { router.push('/login'); return }
-    setExecutions(MOCK_EXECUTIONS)
+    fetch('/api/executions')
+      .then((res) => (res.ok ? res.json() : { executions: [] }))
+      .then((data) => setExecutions(data.executions ?? []))
+      .catch(() => setExecutions([]))
   }, [user, router, setExecutions])
 
   const filtered = executions.filter(
@@ -64,7 +65,7 @@ export default function DashboardPage() {
         {/* Stats */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           <StatCard title="Total Executions" value={stats.total.toLocaleString()} change="+12%" icon={LayoutDashboard} />
-          <StatCard title="Success Rate" value={`${((stats.success / stats.total) * 100).toFixed(1)}%`} change="+2.1%" icon={CheckCircle2} iconColor="bg-green-500/10" iconTextColor="text-green-400" />
+          <StatCard title="Success Rate" value={`${(stats.total ? (stats.success / stats.total) * 100 : 0).toFixed(1)}%`} change="+2.1%" icon={CheckCircle2} iconColor="bg-green-500/10" iconTextColor="text-green-400" />
           <StatCard title="Tokens Used" value={`${(stats.tokens / 1000).toFixed(0)}K`} change="+24%" icon={Coins} iconColor="bg-yellow-500/10" iconTextColor="text-yellow-400" />
           <StatCard title="Avg. Run Time" value={`${(stats.avgTime / 1000).toFixed(1)}s`} change="-0.3s" changeType="up" icon={Clock} iconColor="bg-blue-500/10" iconTextColor="text-blue-400" />
         </div>

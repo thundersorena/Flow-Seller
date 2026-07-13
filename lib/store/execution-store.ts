@@ -15,6 +15,14 @@ export interface Execution {
   executionTime: number
   createdAt: string
   updatedAt: string
+  platforms?: string[]
+  mediaType?: 'text' | 'image' | 'video'
+  promptTokens?: number
+  completionTokens?: number
+  errorMessage?: string
+  // present only in admin views
+  userName?: string
+  userEmail?: string
 }
 
 interface ExecutionState {

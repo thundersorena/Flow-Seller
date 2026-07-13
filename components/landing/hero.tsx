@@ -63,7 +63,7 @@ export function Hero() {
         {/* Badge */}
         <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-brand/30 bg-brand/10 text-brand text-xs font-medium mb-8">
           <span className="w-1.5 h-1.5 rounded-full bg-brand animate-pulse" />
-          Powered by n8n Workflows + AI
+          Powered by an AI Automation Engine
         </div>
 
         {/* Headline */}
