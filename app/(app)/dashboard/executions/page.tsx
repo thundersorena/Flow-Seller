@@ -8,8 +8,8 @@ import { AppHeader } from '@/components/app/header'
 import { StatusBadge } from '@/components/app/status-badge'
 import { Button } from '@/components/ui/button'
 import { useExecutionStore } from '@/lib/store/execution-store'
-import { MOCK_EXECUTIONS } from '@/lib/mock-data'
-import type { ExecutionStatus } from '@/lib/store/execution-store'
+import { api } from '@/lib/api'
+import type { Execution, ExecutionStatus } from '@/lib/store/execution-store'
 
 const STATUSES: ExecutionStatus[] = ['success', 'failed', 'running', 'pending']
 
@@ -19,7 +19,11 @@ export default function ExecutionsPage() {
   const [statusFilter, setStatusFilter] = useState<ExecutionStatus | 'all'>('all')
   const [copied, setCopied] = useState<string | null>(null)
 
-  useEffect(() => { setExecutions(MOCK_EXECUTIONS) }, [setExecutions])
+  useEffect(() => {
+    api<{ executions: Execution[] }>('/api/executions?limit=200')
+      .then((data) => setExecutions(data.executions))
+      .catch(() => setExecutions([]))
+  }, [setExecutions])
 
   const filtered = executions.filter((e) => {
     const matchSearch = e.workflowName.toLowerCase().includes(search.toLowerCase()) || e.id.includes(search)

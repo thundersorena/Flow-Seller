@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import {
   Zap, LayoutDashboard, PlaySquare, FileText, Settings,
-  LogOut, ChevronDown, Shield, Users, BarChart3, Sliders,
+  LogOut, ShoppingBag, Users, BarChart3, Sliders,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useAuthStore } from '@/lib/store/auth-store'
@@ -12,6 +12,7 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 
 const USER_NAV = [
   { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
+  { label: 'Flows Store', href: '/flows', icon: ShoppingBag },
   { label: 'New Automation', href: '/form', icon: PlaySquare },
   { label: 'Executions', href: '/dashboard/executions', icon: FileText },
   { label: 'Settings', href: '/dashboard/settings', icon: Settings },
@@ -31,7 +32,8 @@ export function Sidebar() {
   const isAdmin = user?.role === 'admin'
   const nav = isAdmin ? ADMIN_NAV : USER_NAV
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    await fetch('/api/logout', { method: 'POST' }).catch(() => {})
     logout()
     router.push('/login')
   }
@@ -71,17 +73,6 @@ export function Sidebar() {
             </Link>
           )
         })}
-
-        {/* Role switcher for demo */}
-        {!isAdmin && (
-          <Link
-            href="/admin"
-            className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-sidebar-foreground/50 hover:text-sidebar-foreground hover:bg-sidebar-accent transition-all mt-4"
-          >
-            <Shield className="w-4 h-4 shrink-0" />
-            Admin Panel
-          </Link>
-        )}
       </nav>
 
       {/* User footer */}

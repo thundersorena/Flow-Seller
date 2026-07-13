@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
 import { format } from 'date-fns'
 import { LayoutDashboard, Zap, CheckCircle2, Coins, Clock, ArrowRight, Eye, Copy, Download, RefreshCw } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -11,20 +10,20 @@ import { StatCard } from '@/components/app/stat-card'
 import { StatusBadge } from '@/components/app/status-badge'
 import { useAuthStore } from '@/lib/store/auth-store'
 import { useExecutionStore } from '@/lib/store/execution-store'
-import { MOCK_EXECUTIONS } from '@/lib/mock-data'
+import { api } from '@/lib/api'
 import type { Execution } from '@/lib/store/execution-store'
 
 export default function DashboardPage() {
-  const router = useRouter()
-  const { user } = useAuthStore()
+  const { user, allowance } = useAuthStore()
   const { executions, setExecutions } = useExecutionStore()
   const [search, setSearch] = useState('')
   const [copied, setCopied] = useState<string | null>(null)
 
   useEffect(() => {
-    if (!user) { router.push('/login'); return }
-    setExecutions(MOCK_EXECUTIONS)
-  }, [user, router, setExecutions])
+    api<{ executions: Execution[] }>('/api/executions')
+      .then((data) => setExecutions(data.executions))
+      .catch(() => setExecutions([]))
+  }, [setExecutions])
 
   const filtered = executions.filter(
     (e) =>
@@ -63,11 +62,35 @@ export default function DashboardPage() {
       <div className="p-6 space-y-6">
         {/* Stats */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          <StatCard title="Total Executions" value={stats.total.toLocaleString()} change="+12%" icon={LayoutDashboard} />
-          <StatCard title="Success Rate" value={`${((stats.success / stats.total) * 100).toFixed(1)}%`} change="+2.1%" icon={CheckCircle2} iconColor="bg-green-500/10" iconTextColor="text-green-400" />
-          <StatCard title="Tokens Used" value={`${(stats.tokens / 1000).toFixed(0)}K`} change="+24%" icon={Coins} iconColor="bg-yellow-500/10" iconTextColor="text-yellow-400" />
-          <StatCard title="Avg. Run Time" value={`${(stats.avgTime / 1000).toFixed(1)}s`} change="-0.3s" changeType="up" icon={Clock} iconColor="bg-blue-500/10" iconTextColor="text-blue-400" />
+          <StatCard title="Total Executions" value={stats.total.toLocaleString()} icon={LayoutDashboard} />
+          <StatCard title="Success Rate" value={stats.total ? `${((stats.success / stats.total) * 100).toFixed(1)}%` : '—'} icon={CheckCircle2} iconColor="bg-green-500/10" iconTextColor="text-green-400" />
+          <StatCard title="Tokens Used" value={`${(stats.tokens / 1000).toFixed(1)}K`} icon={Coins} iconColor="bg-yellow-500/10" iconTextColor="text-yellow-400" />
+          <StatCard title="Avg. Run Time" value={stats.total ? `${(stats.avgTime / 1000).toFixed(1)}s` : '—'} icon={Clock} iconColor="bg-blue-500/10" iconTextColor="text-blue-400" />
         </div>
+
+        {/* Daily token allowance */}
+        {allowance && (
+          <div className="bg-card border border-border/60 rounded-2xl p-5">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3">
+              <div>
+                <h2 className="font-semibold text-sm">Daily token usage</h2>
+                <p className="text-xs text-muted-foreground">
+                  {allowance.plan?.name ?? 'No plan'} · {allowance.usedToday.toLocaleString()} of {allowance.dailyLimit.toLocaleString()} tokens used today
+                  {allowance.bonusTokens > 0 && ` · ${allowance.bonusTokens.toLocaleString()} bonus tokens in reserve`}
+                </p>
+              </div>
+              <Link href="/flows">
+                <Button variant="outline" size="sm" className="h-8 text-xs">Upgrade / Buy tokens</Button>
+              </Link>
+            </div>
+            <div className="h-2 rounded-full bg-muted overflow-hidden">
+              <div
+                className={`h-full transition-all ${allowance.usedToday >= allowance.dailyLimit ? 'bg-red-400' : 'bg-brand'}`}
+                style={{ width: `${Math.min(100, (allowance.usedToday / Math.max(1, allowance.dailyLimit)) * 100)}%` }}
+              />
+            </div>
+          </div>
+        )}
 
         {/* Execution table */}
         <div className="bg-card border border-border/60 rounded-2xl overflow-hidden">
