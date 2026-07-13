@@ -1,0 +1,1662 @@
+{
+  "nodes": [
+    {
+      "parameters": {
+        "updates": [
+          "message"
+        ],
+        "additionalFields": {}
+      },
+      "id": "0cf2c154-ab99-4d80-af2e-8fe5ce5062de",
+      "name": "User Message",
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        -2272,
+        480
+      ],
+      "webhookId": "c3d61a02-fb7a-4ea4-87d3-0b95e2bc5341",
+      "credentials": {
+        "telegramApi": {
+          "id": "YEgQphOtGTP4c6x1",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.message.from.id }}",
+              "operator": {
+                "type": "number",
+                "operation": "equals"
+              },
+              "rightValue": 74377933,
+              "id": "a83a4f1a-9d63-4cfe-80c5-e193dc4d7f51"
+            },
+            {
+              "id": "7d916550-5daf-4232-a897-78a44f6df8d1",
+              "leftValue": "",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "4d88a86a-4c6f-4dac-9875-9022604f44a4",
+      "name": "Authorized?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -2048,
+        480
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "sendAndWait",
+        "chatId": "={{ $json.message.from.id }}",
+        "message": "Which platform do you need content for?",
+        "approvalOptions": {
+          "values": {
+            "approvalType": "double",
+            "approveLabel": "📱 Telegram",
+            "disapproveLabel": "📷 Instagram"
+          }
+        },
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "id": "a5e81037-d840-4726-9521-8bb88d9c8016",
+      "name": "Choose Platform",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        -1856,
+        464
+      ],
+      "webhookId": "cc811fb9-3c27-47d2-9bcb-7ad6434cfb2d",
+      "credentials": {
+        "telegramApi": {
+          "id": "YEgQphOtGTP4c6x1",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.data.approved }}",
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              },
+              "rightValue": true,
+              "id": "platform-cond-1"
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {
+          "ignoreCase": false
+        }
+      },
+      "id": "fe8e164d-a76b-4147-a701-194cf7a02916",
+      "name": "Telegram or Instagram?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -1648,
+        464
+      ]
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('User Message').item.json.message.from.id }}",
+        "text": "=Click the link below to fill the form:\n\n{{ $execution.resumeFormUrl }}",
+        "additionalFields": {}
+      },
+      "id": "45dfdc58-70e2-4c32-a354-57eefd7012ad",
+      "name": "Send Form Link",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        -1456,
+        128
+      ],
+      "webhookId": "cf0f4af7-afa1-4748-8269-780381832c4e",
+      "credentials": {
+        "telegramApi": {
+          "id": "YEgQphOtGTP4c6x1",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resume": "form",
+        "formTitle": "Content + Image Generator",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Title/Topic",
+              "placeholder": "e.g., How AI is changing business",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Category",
+              "fieldType": "dropdown",
+              "fieldOptions": {
+                "values": [
+                  {
+                    "option": "Technology"
+                  },
+                  {
+                    "option": "Business"
+                  },
+                  {
+                    "option": "Health"
+                  },
+                  {
+                    "option": "Lifestyle"
+                  },
+                  {
+                    "option": "Education"
+                  }
+                ]
+              },
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Content Type",
+              "fieldType": "dropdown",
+              "fieldOptions": {
+                "values": [
+                  {
+                    "option": "Blog Post"
+                  },
+                  {
+                    "option": "Social Media"
+                  },
+                  {
+                    "option": "Article"
+                  },
+                  {
+                    "option": "Tutorial"
+                  }
+                ]
+              },
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Tone",
+              "fieldType": "dropdown",
+              "fieldOptions": {
+                "values": [
+                  {
+                    "option": "Professional"
+                  },
+                  {
+                    "option": "Casual"
+                  },
+                  {
+                    "option": "Technical"
+                  }
+                ]
+              },
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Length",
+              "fieldType": "dropdown",
+              "fieldOptions": {
+                "values": [
+                  {
+                    "option": "Short (200-300 words)"
+                  },
+                  {
+                    "option": "Medium (500-800 words)"
+                  },
+                  {
+                    "option": "Long (full content) "
+                  }
+                ]
+              },
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Generate Image?",
+              "fieldType": "radio",
+              "fieldOptions": {
+                "values": [
+                  {
+                    "option": "Yes"
+                  },
+                  {
+                    "option": "No"
+                  }
+                ]
+              },
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "describe what you need exactly ? ",
+              "fieldType": "textarea",
+              "placeholder": "describe what you need exactly in detail"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "8799cf87-7708-41c5-9b8b-3b7397c0b752",
+      "name": "Form",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        -1232,
+        128
+      ],
+      "webhookId": "b24068a8-a0fe-4cfb-a208-7dca07706afe"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "chatid",
+              "name": "chatId",
+              "value": "={{ $('User Message').item.json.message.from.id }}",
+              "type": "number"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "0657cc77-9794-4920-9656-da2f3db58648",
+      "name": "Preserve Data",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -1008,
+        128
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Create a real, original {{ $json[\"Content Type\"] }} about: {{ $json[\"Title/Topic\"] }}\n\nCategory: {{ $json.Category }}\nTone: {{ $json.Tone }}\nLength: {{ $json.Length }}\nGenerate Image?:{{ $json[\"Generate Image?\"] }}\n\nWrite REAL content (not placeholder). Include:\n- Compelling headline\n- Clear sections with real insights\n- Professional formatting\n- Ready for publication NOW",
+        "options": {
+          "systemMessage": "You are a professional content creator. Write original, well-researched, publication-ready content. Never use placeholder text."
+        }
+      },
+      "id": "85a3ca19-9e54-4bb6-87b2-32c38e582ae7",
+      "name": "Generate Content",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        -784,
+        128
+      ]
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-5.4-mini",
+          "mode": "list",
+          "cachedResultName": "gpt-5.4-mini"
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "id": "f555793e-b52e-4d67-b419-2256c5926f60",
+      "name": "OpenAI",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        -784,
+        496
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": "UdpPvzIZuVMZSJTV",
+          "name": "OpenAI account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $('Preserve Data').item.json[\"Generate Image?\"] }}",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              },
+              "rightValue": "Yes",
+              "id": "b93d7d0b-8b90-4c19-b1a5-4cc27c57cdc6"
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "942c5fe2-6144-4dde-8280-121099b29afe",
+      "name": "Generate Image?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -432,
+        128
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "image",
+        "modelId": {
+          "__rl": true,
+          "value": "chatgpt-image-latest",
+          "mode": "list",
+          "cachedResultName": "CHATGPT-IMAGE-LATEST"
+        },
+        "prompt": "={{ $json.output }}",
+        "options": {}
+      },
+      "id": "0596b1d1-90e0-4664-9665-55a260769858",
+      "name": "Generate Image",
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 2.3,
+      "position": [
+        -208,
+        32
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": "UdpPvzIZuVMZSJTV",
+          "name": "OpenAI account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "chatid-final",
+              "name": "chatId",
+              "value": "={{ $('Preserve Data').item.json.chatId }}",
+              "type": "number"
+            },
+            {
+              "id": "content",
+              "name": "messageContent",
+              "value": "={{ $('Generate Content').item.json.output }}",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "38ebe3d9-2d40-4811-968c-8ff2ed792129",
+      "name": "Prepare Message",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        16,
+        32
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "sendPhoto",
+        "chatId": "={{ $json.chatId }}",
+        "binaryData": true,
+        "additionalFields": {
+          "caption": "={{ $json.messageContent.length > 1000 ? $json.messageContent.substring(0, 1000) + '...' : $json.messageContent }}"
+        }
+      },
+      "id": "ab3c073b-2518-43ca-9937-76942d3b3919",
+      "name": "Send with Image",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        240,
+        32
+      ],
+      "webhookId": "79ef28c1-4a46-4077-be0c-12e09091bd7d",
+      "credentials": {
+        "telegramApi": {
+          "id": "YEgQphOtGTP4c6x1",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "chatid-final",
+              "name": "chatId",
+              "value": "={{ $('Preserve Data').item.json.chatId }}",
+              "type": "number"
+            },
+            {
+              "id": "content",
+              "name": "messageContent",
+              "value": "={{ $('Generate Content').item.json.output }}",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "1789a04f-2de5-463b-bc1d-e3895bf0f16f",
+      "name": "No Image",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -208,
+        224
+      ]
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $json.chatId }}",
+        "text": "=📌 {{ $('Preserve Data').item.json[\"Title/Topic\"] }}\n📂 {{ $('Preserve Data').item.json.Category }}\n\n{{ $json.messageContent.length > 3900 ? $json.messageContent.substring(0, 3900) + '...' : $json.messageContent }}",
+        "additionalFields": {}
+      },
+      "id": "60e7611b-8921-4f44-8b4b-b13f908e395b",
+      "name": "Send Text Only",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        16,
+        224
+      ],
+      "webhookId": "0cd620b9-a20f-49e0-a400-74dee88d812a",
+      "credentials": {
+        "telegramApi": {
+          "id": "YEgQphOtGTP4c6x1",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $json.message.from.id }}",
+        "text": "Not authorized",
+        "additionalFields": {}
+      },
+      "id": "d2139fd0-4446-4bdc-8995-06a7263f3b56",
+      "name": "Reject",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        -1856,
+        704
+      ],
+      "webhookId": "9c480311-d4e9-4167-8afc-54bbbfce38a2",
+      "credentials": {
+        "telegramApi": {
+          "id": "YEgQphOtGTP4c6x1",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('User Message').item.json.message.from.id }}",
+        "text": "=Click the link below to fill the Instagram content form:\n\n{{ $execution.resumeFormUrl }}",
+        "additionalFields": {}
+      },
+      "id": "9a345b00-0bdf-472f-8767-2f108976eb76",
+      "name": "Send IG Form Link",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        -1392,
+        816
+      ],
+      "webhookId": "b2479244-b38f-43c7-a60b-c9bc891b4f4b",
+      "credentials": {
+        "telegramApi": {
+          "id": "YEgQphOtGTP4c6x1",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resume": "form",
+        "formTitle": "Instagram Content Generator",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Title/Topic",
+              "placeholder": "e.g., 5 productivity hacks for founders",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Category",
+              "fieldType": "dropdown",
+              "fieldOptions": {
+                "values": [
+                  {
+                    "option": "Technology"
+                  },
+                  {
+                    "option": "Business"
+                  },
+                  {
+                    "option": "Health"
+                  },
+                  {
+                    "option": "Lifestyle"
+                  },
+                  {
+                    "option": "Education"
+                  }
+                ]
+              },
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Tone",
+              "fieldType": "dropdown",
+              "fieldOptions": {
+                "values": [
+                  {
+                    "option": "Professional"
+                  },
+                  {
+                    "option": "Casual"
+                  },
+                  {
+                    "option": "Technical"
+                  }
+                ]
+              },
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Length",
+              "fieldType": "dropdown",
+              "fieldOptions": {
+                "values": [
+                  {
+                    "option": "Short (200-300 words)"
+                  },
+                  {
+                    "option": "Medium (500-800 words)"
+                  },
+                  {
+                    "option": "Long (full content) "
+                  }
+                ]
+              },
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Media Type",
+              "fieldType": "radio",
+              "fieldOptions": {
+                "values": [
+                  {
+                    "option": "Image"
+                  },
+                  {
+                    "option": "Video"
+                  }
+                ]
+              },
+              "requiredField": true
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "49c71bc7-58f5-4784-b6e5-aef7acccc1dc",
+      "name": "IG Form",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        -1168,
+        816
+      ],
+      "webhookId": "43b95669-2ed4-4f68-8b2e-fd832960b371"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "ig-chatid",
+              "name": "chatId",
+              "value": "={{ $('User Message').item.json.message.from.id }}",
+              "type": "number"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "c6f17437-5e9e-4046-9fa3-20886f6ce559",
+      "name": "Preserve IG Data",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -944,
+        816
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Create an Instagram-ready post about: {{ $json[\"Title/Topic\"] }}\n\nCategory: {{ $json.Category }}\nTone: {{ $json.Tone }}\nLength: {{ $json.Length }}\nMedia Type: {{ $json[\"Media Type\"] }}\n\nWrite:\n1. A scroll-stopping Instagram caption (strong hook in the first line, short punchy lines/line breaks for mobile readability, a clear call-to-action at the end).\n2. A block of 15-25 hashtags optimized for Instagram's current algorithm: mix broad/high-volume tags with niche/low-competition tags relevant to the topic and category, favor tags that are currently trending in this niche, avoid banned or overused generic tags (e.g. #love #instagood #follow4follow), and put them on their own line at the end labeled 'Hashtags:'.\n\nWrite REAL, original, publication-ready content — never placeholder text.",
+        "options": {
+          "systemMessage": "You are a professional social media content strategist specializing in Instagram growth. You tailor captions and hashtags to Instagram's current ranking signals (engagement velocity, relevance, niche hashtag mix) rather than using generic tags."
+        }
+      },
+      "id": "798ca5fa-41b4-4c7a-baf4-03e29c0e325c",
+      "name": "Generate IG Content",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        -784,
+        816
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $('Preserve IG Data').item.json[\"Media Type\"] }}",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              },
+              "rightValue": "Video",
+              "id": "media-type-cond-1"
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "254cea2d-61ab-4d37-a2d3-b84c168bf781",
+      "name": "Is Video?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -496,
+        816
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "image",
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-image-1-mini",
+          "mode": "list",
+          "cachedResultName": "GPT-IMAGE-1-MINI"
+        },
+        "prompt": "={{ $('Generate IG Content').item.json.output }}",
+        "options": {}
+      },
+      "id": "52689854-f681-4778-a2d4-4f7fd943e196",
+      "name": "Generate Image (IG)",
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 2.3,
+      "position": [
+        -272,
+        704
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": "UdpPvzIZuVMZSJTV",
+          "name": "OpenAI account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.higgsfield.ai/v1/generate/video",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { \"prompt\": $('Generate IG Content').item.json.output, \"topic\": $('Preserve IG Data').item.json[\"Title/Topic\"] } }}",
+        "options": {}
+      },
+      "id": "4aaf391c-8ea0-4ad0-b2e5-f3ebd240145d",
+      "name": "Generate Video (Higgsfield)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        -272,
+        960
+      ],
+      "disabled": true,
+      "notes": "PLACEHOLDER - disabled. Replace url/body with the real Higgsfield API contract once you have an API key. Set authentication to genericCredentialType + the auth scheme Higgsfield docs specify, attach the credential, then re-enable this node."
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "ig-chatid-final",
+              "name": "chatId",
+              "value": "={{ $('Preserve IG Data').item.json.chatId }}",
+              "type": "number"
+            },
+            {
+              "id": "ig-content",
+              "name": "messageContent",
+              "value": "={{ $('Generate IG Content').item.json.output }}",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "c9257950-1803-4df0-a487-d302e717908e",
+      "name": "Prepare IG Image Message",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -48,
+        704
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "ig-chatid-final-v",
+              "name": "chatId",
+              "value": "={{ $('Preserve IG Data').item.json.chatId }}",
+              "type": "number"
+            },
+            {
+              "id": "ig-content-v",
+              "name": "messageContent",
+              "value": "={{ $('Generate IG Content').item.json.output }}",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "b88009bb-574b-4f31-963b-8fe49625fe49",
+      "name": "Prepare IG Video Message",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -48,
+        960
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "sendPhoto",
+        "chatId": "={{ $json.chatId }}",
+        "binaryData": true,
+        "additionalFields": {
+          "caption": "={{ $json.messageContent.length > 1000 ? $json.messageContent.substring(0, 1000) + '...' : $json.messageContent }}"
+        }
+      },
+      "id": "78c6fc4c-861b-4fd9-8dd7-37dee23f6f7f",
+      "name": "Send IG Image Preview",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        176,
+        704
+      ],
+      "webhookId": "db5ddcfa-f6a9-4265-9bce-31da60e7c3cc",
+      "credentials": {
+        "telegramApi": {
+          "id": "YEgQphOtGTP4c6x1",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $json.chatId }}",
+        "text": "=🎬 Instagram video content ready (video generation via Higgsfield isn't wired up yet — add your API key and enable the 'Generate Video (Higgsfield)' node):\n\n{{ $json.messageContent.length > 3900 ? $json.messageContent.substring(0, 3900) + '...' : $json.messageContent }}",
+        "additionalFields": {}
+      },
+      "id": "55dd9179-5a4c-41da-9140-e17f2bf94eb7",
+      "name": "Send IG Video Preview",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        176,
+        960
+      ],
+      "webhookId": "87ff947a-b5a3-4e6c-ac3a-ba90eebd0306",
+      "credentials": {
+        "telegramApi": {
+          "id": "YEgQphOtGTP4c6x1",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authType": "oAuth2",
+        "httpRequestMethod": "POST",
+        "graphApiVersion": "v21.0",
+        "node": "YOUR_IG_BUSINESS_ACCOUNT_ID",
+        "edge": "media",
+        "options": {
+          "queryParameters": {
+            "parameter": [
+              {
+                "name": "image_url",
+                "value": "={{ $json.publicImageUrl }}"
+              },
+              {
+                "name": "caption",
+                "value": "={{ $json.messageContent }}"
+              }
+            ]
+          }
+        }
+      },
+      "id": "1aa20dd2-5ba1-435c-89e7-c6efa8c3e426",
+      "name": "Publish to Instagram (Facebook Graph API)",
+      "type": "n8n-nodes-base.facebookGraphApi",
+      "typeVersion": 1,
+      "position": [
+        400,
+        704
+      ],
+      "disabled": true,
+      "notes": "PLACEHOLDER - disabled until: 1) a Facebook Graph API OAuth2 credential is added (Meta login, linked to your IG Business/Creator account via a Facebook Page), 2) 'node' below is set to your real IG Business Account ID, 3) generated images are hosted at a public URL (image_url) - the OpenAI node's binary output needs uploading somewhere public first. This call creates the media container; a second call to /media_publish (using the container id this returns) is also needed to actually publish."
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('User Message').item.json.message.from.id }}",
+        "text": "=Click the link below to fill the form:\n\n{{ $execution.resumeFormUrl }}",
+        "additionalFields": {}
+      },
+      "id": "a9617f80-3a14-49ce-a05c-2a8aa0917da4",
+      "name": "Send Form Link1",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        -1472,
+        -400
+      ],
+      "webhookId": "cf0f4af7-afa1-4748-8269-780381832c4e",
+      "credentials": {
+        "telegramApi": {
+          "id": "YEgQphOtGTP4c6x1",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resume": "form",
+        "formTitle": "Content + Image Generator",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Title/Topic",
+              "placeholder": "e.g., How AI is changing business",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Category",
+              "fieldType": "dropdown",
+              "fieldOptions": {
+                "values": [
+                  {
+                    "option": "Technology"
+                  },
+                  {
+                    "option": "Business"
+                  },
+                  {
+                    "option": "Health"
+                  },
+                  {
+                    "option": "Lifestyle"
+                  },
+                  {
+                    "option": "Education"
+                  }
+                ]
+              },
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Content Type",
+              "fieldType": "dropdown",
+              "fieldOptions": {
+                "values": [
+                  {
+                    "option": "Blog Post"
+                  },
+                  {
+                    "option": "Social Media"
+                  },
+                  {
+                    "option": "Article"
+                  },
+                  {
+                    "option": "Tutorial"
+                  }
+                ]
+              },
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Tone",
+              "fieldType": "dropdown",
+              "fieldOptions": {
+                "values": [
+                  {
+                    "option": "Professional"
+                  },
+                  {
+                    "option": "Casual"
+                  },
+                  {
+                    "option": "Technical"
+                  }
+                ]
+              },
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Length",
+              "fieldType": "dropdown",
+              "fieldOptions": {
+                "values": [
+                  {
+                    "option": "Short (200-300 words)"
+                  },
+                  {
+                    "option": "Medium (500-800 words)"
+                  },
+                  {
+                    "option": "Long (full content) "
+                  }
+                ]
+              },
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Generate Image?",
+              "fieldType": "radio",
+              "fieldOptions": {
+                "values": [
+                  {
+                    "option": "Yes"
+                  },
+                  {
+                    "option": "No"
+                  }
+                ]
+              },
+              "requiredField": true
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "48e42616-78f3-4765-8ce4-1ae35d96a532",
+      "name": "Form1",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        -1248,
+        -400
+      ],
+      "webhookId": "b24068a8-a0fe-4cfb-a208-7dca07706afe"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "chatid",
+              "name": "chatId",
+              "value": "={{ $('User Message').item.json.message.from.id }}",
+              "type": "number"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "cccb839a-fcf0-48c1-86ec-dfd093ca4db9",
+      "name": "Preserve Data1",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -1024,
+        -400
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Create a real, original {{ $json[\"Content Type\"] }} about: {{ $json[\"Title/Topic\"] }}\n\nCategory: {{ $json.Category }}\nTone: {{ $json.Tone }}\nLength: {{ $json.Length }}\nGenerate Image?:{{ $json[\"Generate Image?\"] }}\n\nWrite REAL content (not placeholder). Include:\n- Compelling headline\n- Clear sections with real insights\n- Professional formatting\n- Ready for publication NOW",
+        "options": {
+          "systemMessage": "You are a professional content creator. Write original, well-researched, publication-ready content. Never use placeholder text."
+        }
+      },
+      "id": "4ec31e21-5cba-406f-9647-e7eb8b856714",
+      "name": "Generate Content1",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        -800,
+        -400
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $('Preserve Data1').item.json[\"Generate Image?\"] }}",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              },
+              "rightValue": "Yes",
+              "id": "b93d7d0b-8b90-4c19-b1a5-4cc27c57cdc6"
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "c6374512-a550-4ead-bb3d-ad3986750de5",
+      "name": "Generate Image?1",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -448,
+        -400
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "image",
+        "modelId": {
+          "__rl": true,
+          "value": "chatgpt-image-latest",
+          "mode": "list",
+          "cachedResultName": "CHATGPT-IMAGE-LATEST"
+        },
+        "prompt": "={{ $json.output }}",
+        "options": {}
+      },
+      "id": "2aa218dd-ba98-4518-bb3f-8b6dcb365a35",
+      "name": "Generate Image1",
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 2.3,
+      "position": [
+        -224,
+        -496
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": "UdpPvzIZuVMZSJTV",
+          "name": "OpenAI account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "chatid-final",
+              "name": "chatId",
+              "value": "={{ $('Preserve Data1').item.json.chatId }}",
+              "type": "number"
+            },
+            {
+              "id": "content",
+              "name": "messageContent",
+              "value": "={{ $('Generate Content1').item.json.output }}",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "c5755ed2-545a-45eb-928d-3b6d24d6f42c",
+      "name": "Prepare Message1",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        0,
+        -496
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "sendPhoto",
+        "chatId": "={{ $json.chatId }}",
+        "binaryData": true,
+        "additionalFields": {
+          "caption": "={{ $json.messageContent.length > 1000 ? $json.messageContent.substring(0, 1000) + '...' : $json.messageContent }}"
+        }
+      },
+      "id": "7a893730-5482-4e80-b367-441d64b8d2bd",
+      "name": "Send with Image1",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        224,
+        -496
+      ],
+      "webhookId": "79ef28c1-4a46-4077-be0c-12e09091bd7d",
+      "credentials": {
+        "telegramApi": {
+          "id": "YEgQphOtGTP4c6x1",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "chatid-final",
+              "name": "chatId",
+              "value": "={{ $('Preserve Data1').item.json.chatId }}",
+              "type": "number"
+            },
+            {
+              "id": "content",
+              "name": "messageContent",
+              "value": "={{ $('Generate Content1').item.json.output }}",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "a55775c3-546f-4759-a2ce-6398fb2149e4",
+      "name": "No Image1",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -224,
+        -304
+      ]
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $json.chatId }}",
+        "text": "=📌 {{ $('Preserve Data1').item.json[\"Title/Topic\"] }}\n📂 {{ $('Preserve Data1').item.json.Category }}\n\n{{ $json.messageContent.length > 3900 ? $json.messageContent.substring(0, 3900) + '...' : $json.messageContent }}",
+        "additionalFields": {}
+      },
+      "id": "04f0c90a-2c7a-4414-85bb-22dc9d5c5b6c",
+      "name": "Send Text Only1",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        -304
+      ],
+      "webhookId": "0cd620b9-a20f-49e0-a400-74dee88d812a",
+      "credentials": {
+        "telegramApi": {
+          "id": "YEgQphOtGTP4c6x1",
+          "name": "Telegram account"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "User Message": {
+      "main": [
+        [
+          {
+            "node": "Authorized?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Authorized?": {
+      "main": [
+        [
+          {
+            "node": "Choose Platform",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Reject",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Choose Platform": {
+      "main": [
+        [
+          {
+            "node": "Telegram or Instagram?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Telegram or Instagram?": {
+      "main": [
+        [
+          {
+            "node": "Send Form Link",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send IG Form Link",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Form Link": {
+      "main": [
+        [
+          {
+            "node": "Form",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Form": {
+      "main": [
+        [
+          {
+            "node": "Preserve Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Preserve Data": {
+      "main": [
+        [
+          {
+            "node": "Generate Content",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Content": {
+      "main": [
+        [
+          {
+            "node": "Generate Image?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Generate Content",
+            "type": "ai_languageModel",
+            "index": 0
+          },
+          {
+            "node": "Generate IG Content",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Image?": {
+      "main": [
+        [
+          {
+            "node": "Generate Image",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "No Image",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Image": {
+      "main": [
+        [
+          {
+            "node": "Prepare Message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Message": {
+      "main": [
+        [
+          {
+            "node": "Send with Image",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "No Image": {
+      "main": [
+        [
+          {
+            "node": "Send Text Only",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send IG Form Link": {
+      "main": [
+        [
+          {
+            "node": "IG Form",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IG Form": {
+      "main": [
+        [
+          {
+            "node": "Preserve IG Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Preserve IG Data": {
+      "main": [
+        [
+          {
+            "node": "Generate IG Content",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate IG Content": {
+      "main": [
+        [
+          {
+            "node": "Is Video?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Video?": {
+      "main": [
+        [
+          {
+            "node": "Generate Video (Higgsfield)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Generate Image (IG)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Image (IG)": {
+      "main": [
+        [
+          {
+            "node": "Prepare IG Image Message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Video (Higgsfield)": {
+      "main": [
+        [
+          {
+            "node": "Prepare IG Video Message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare IG Image Message": {
+      "main": [
+        [
+          {
+            "node": "Send IG Image Preview",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare IG Video Message": {
+      "main": [
+        [
+          {
+            "node": "Send IG Video Preview",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send IG Image Preview": {
+      "main": [
+        [
+          {
+            "node": "Publish to Instagram (Facebook Graph API)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Form Link1": {
+      "main": [
+        [
+          {
+            "node": "Form1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Form1": {
+      "main": [
+        [
+          {
+            "node": "Preserve Data1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Preserve Data1": {
+      "main": [
+        [
+          {
+            "node": "Generate Content1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Content1": {
+      "main": [
+        [
+          {
+            "node": "Generate Image?1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Image?1": {
+      "main": [
+        [
+          {
+            "node": "Generate Image1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "No Image1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Image1": {
+      "main": [
+        [
+          {
+            "node": "Prepare Message1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Message1": {
+      "main": [
+        [
+          {
+            "node": "Send with Image1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "No Image1": {
+      "main": [
+        [
+          {
+            "node": "Send Text Only1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "meta": {
+    "instanceId": "13fee2fce9761d43c802ab4c224608c2038205bdc92dae9a6e0ad500bd24ac73"
+  }
+}
