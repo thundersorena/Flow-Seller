@@ -10,6 +10,8 @@ export const executionStatusEnum = pgEnum('execution_status', [
   'failed',
 ]);
 
+export const mediaTypeEnum = pgEnum('media_type', ['text', 'image', 'video']);
+
 
 export const users = pgTable('users', {
   id:            uuid('id').defaultRandom().primaryKey(),
@@ -36,6 +38,14 @@ export const executions = pgTable('executions', {
   executionTime: integer('execution_time').default(0).notNull(),
   createdAt:     timestamp('created_at').defaultNow().notNull(),
   updatedAt:     timestamp('updated_at').defaultNow().notNull(),
+
+  // Social publishing + token monitoring
+  platforms:         jsonb('platforms').default([]).notNull().$type<string[]>(),
+  mediaType:         mediaTypeEnum('media_type').default('text').notNull(),
+  promptTokens:      integer('prompt_tokens').default(0).notNull(),
+  completionTokens:  integer('completion_tokens').default(0).notNull(),
+  errorMessage:      text('error_message').default('').notNull(),
+  engineExecutionId: text('engine_execution_id').default('').notNull(),
 });
 
 

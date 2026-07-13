@@ -19,12 +19,12 @@ const jetbrainsMono = JetBrains_Mono({
 export const metadata: Metadata = {
   title: 'FlowAI — Automate with Intelligence',
   description:
-    'The AI-powered automation platform built on n8n workflows. Submit data, trigger AI automations, and receive generated results in seconds.',
+    'The AI-powered content automation platform. Describe what you need, and FlowAI writes, designs and publishes it to your channels in seconds.',
   generator: 'v0.app',
-  keywords: ['AI automation', 'n8n', 'workflow automation', 'AI SaaS'],
+  keywords: ['AI automation', 'content generation', 'social media automation', 'AI SaaS'],
   openGraph: {
     title: 'FlowAI — Automate with Intelligence',
-    description: 'The AI-powered automation platform built on n8n workflows.',
+    description: 'The AI-powered content automation platform.',
     type: 'website',
   },
 }

@@ -1,39 +1,61 @@
 'use client'
 
 import { useEffect, useState, Suspense } from 'react'
-import { useSearchParams, useRouter } from 'next/navigation'
+import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { format } from 'date-fns'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
-import { Copy, Download, RefreshCw, ArrowLeft, CheckCircle2, Clock, Cpu, Coins, ExternalLink } from 'lucide-react'
+import { Copy, Download, RefreshCw, ArrowLeft, CheckCircle2, Clock, Cpu, Coins, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { AppHeader } from '@/components/app/header'
 import { StatusBadge } from '@/components/app/status-badge'
-import { useExecutionStore } from '@/lib/store/execution-store'
-import { MOCK_EXECUTIONS } from '@/lib/mock-data'
+import type { Execution } from '@/lib/store/execution-store'
+
+const POLL_INTERVAL_MS = 4000
 
 function ResultsContent() {
   const searchParams = useSearchParams()
-  const router = useRouter()
   const id = searchParams.get('id')
-  const { executions, currentExecution, setExecutions, setCurrentExecution } = useExecutionStore()
+  const [exec, setExec] = useState<Execution | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [notFound, setNotFound] = useState(false)
   const [copied, setCopied] = useState(false)
 
   useEffect(() => {
-    if (!executions.length) setExecutions(MOCK_EXECUTIONS)
-  }, [executions.length, setExecutions])
+    if (!id) { setLoading(false); setNotFound(true); return }
+    let cancelled = false
+    let timer: ReturnType<typeof setTimeout> | undefined
 
-  useEffect(() => {
-    if (id && executions.length) {
-      const found = executions.find((e) => e.id === id)
-      if (found) setCurrentExecution(found)
+    const load = async () => {
+      try {
+        const res = await fetch(`/api/executions/${id}`)
+        if (cancelled) return
+        if (!res.ok) { setNotFound(true); setLoading(false); return }
+        const data = await res.json()
+        setExec(data.execution)
+        setLoading(false)
+        if (data.execution.status === 'pending' || data.execution.status === 'running') {
+          timer = setTimeout(load, POLL_INTERVAL_MS)
+        }
+      } catch {
+        if (!cancelled) timer = setTimeout(load, POLL_INTERVAL_MS)
+      }
     }
-  }, [id, executions, setCurrentExecution])
+    load()
+    return () => { cancelled = true; if (timer) clearTimeout(timer) }
+  }, [id])
 
-  const exec = currentExecution ?? executions.find((e) => e.id === id) ?? executions[0]
+  if (loading) {
+    return (
+      <div className="p-6 text-center text-muted-foreground py-24">
+        <Loader2 className="w-6 h-6 animate-spin mx-auto mb-3" />
+        <p className="text-sm">Loading result…</p>
+      </div>
+    )
+  }
 
-  if (!exec) {
+  if (notFound || !exec) {
     return (
       <div className="p-6 text-center text-muted-foreground">
         <p>Execution not found.</p>
@@ -41,6 +63,8 @@ function ResultsContent() {
       </div>
     )
   }
+
+  const inProgress = exec.status === 'pending' || exec.status === 'running'
 
   const copyOutput = () => {
     navigator.clipboard.writeText(exec.output)
@@ -82,6 +106,21 @@ function ResultsContent() {
       />
 
       <div className="p-6 space-y-5">
+        {inProgress && (
+          <div className="flex items-center gap-3 p-4 rounded-xl bg-brand/5 border border-brand/20">
+            <Loader2 className="w-4 h-4 text-brand animate-spin" />
+            <div>
+              <p className="text-sm font-medium">Your content is being generated and published…</p>
+              <p className="text-xs text-muted-foreground">This page updates automatically — no need to refresh.</p>
+            </div>
+          </div>
+        )}
+        {exec.status === 'failed' && exec.errorMessage && (
+          <div className="p-4 rounded-xl bg-destructive/10 border border-destructive/30 text-sm text-destructive">
+            {exec.errorMessage}
+          </div>
+        )}
+
         {/* Metadata cards */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           {[
