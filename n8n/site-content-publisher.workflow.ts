@@ -474,7 +474,7 @@ const notePlatforms = sticky('## Platform setup\n- Telegram: set your CHANNEL id
 export default workflow('site-content-publisher', 'Site Content Publisher')
   .add(siteWebhook)
   .to(validSecret
-    .onTrue(normalizeRequest.to(acknowledgeRequest.to(buildPrompt.to(generateContent.onError(reportFailure)))))
+    .onTrue!(normalizeRequest.to(acknowledgeRequest.to(buildPrompt.to(generateContent.onError(reportFailure)))))
     .onFalse(rejectUnauthorized))
   .add(generateContent)
   .to(extractResult)
@@ -482,18 +482,18 @@ export default workflow('site-content-publisher', 'Site Content Publisher')
   .to(saveResultToSite)
   .add(extractResult)
   .to(mediaTypeSwitch
-    .onCase(0, generateImage.to(imagePlatforms
-      .onCase(0, tgChannelPhoto)
+    .onCase!(0, generateImage.to(imagePlatforms
+      .onCase!(0, tgChannelPhoto)
       .onCase(1, baleImagePost)
       .onCase(2, waImage)
       .onCase(3, igImagePlaceholder)))
     .onCase(1, generateVideo.to(videoPlatforms
-      .onCase(0, tgChannelVideo)
+      .onCase!(0, tgChannelVideo)
       .onCase(1, baleVideoPost)
       .onCase(2, waVideo)
       .onCase(3, igVideoPlaceholder)))
     .onCase(2, textPlatforms
-      .onCase(0, tgChannelText)
+      .onCase!(0, tgChannelText)
       .onCase(1, baleTextPost)
       .onCase(2, waText)))
   .add(noteOverview)
