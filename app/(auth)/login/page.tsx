@@ -11,7 +11,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useAuthStore } from '@/lib/store/auth-store'
-import { MOCK_USER, MOCK_ADMIN } from '@/lib/mock-data'
+import { loginAction } from '@/lib/auth/actions'
 
 const schema = z.object({
   email: z.string().email('Enter a valid email'),
@@ -33,19 +33,27 @@ export default function LoginPage() {
 
   const onSubmit = async (data: FormData) => {
     setError('')
-    await new Promise((r) => setTimeout(r, 1000))
-    // Mock auth — admin@flowai.dev → admin, any other → user
-    if (data.email === 'admin@flowai.dev') {
-      setUser(MOCK_ADMIN)
-      setToken('mock-admin-token')
-      router.push('/admin')
-    } else if (data.email.includes('@')) {
-      setUser({ ...MOCK_USER, email: data.email })
-      setToken('mock-user-token')
-      router.push('/dashboard')
-    } else {
-      setError('Invalid credentials. Try any email and 6+ char password.')
+    const fd = new window.FormData()
+    fd.set('email', data.email)
+    fd.set('password', data.password)
+
+    const result = await loginAction(fd)
+    if ('error' in result || !result.user) {
+      setError(result.error ?? 'Login failed. Please try again.')
+      return
     }
+
+    const u = result.user
+    setUser({
+      id: u.id,
+      name: u.name,
+      email: u.email,
+      role: u.role,
+      emailVerified: u.emailVerified,
+      createdAt: String(u.createdAt),
+    })
+    setToken('session')
+    router.push(u.role === 'admin' ? '/admin' : '/dashboard')
   }
 
   return (
@@ -116,12 +124,6 @@ export default function LoginPage() {
           )}
         </Button>
       </form>
-
-      <div className="mt-4 p-3 rounded-lg bg-muted/40 border border-border/40">
-        <p className="text-xs text-muted-foreground text-center mb-1">Demo credentials</p>
-        <p className="text-xs text-center"><span className="text-foreground font-mono">admin@flowai.dev</span> → Admin dashboard</p>
-        <p className="text-xs text-center"><span className="text-foreground font-mono">any@email.com</span> → User dashboard</p>
-      </div>
 
       <p className="mt-6 text-sm text-center text-muted-foreground">
         Don&apos;t have an account?{' '}
