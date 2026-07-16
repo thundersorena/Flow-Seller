@@ -8,8 +8,7 @@ import { AppHeader } from '@/components/app/header'
 import { StatusBadge } from '@/components/app/status-badge'
 import { Button } from '@/components/ui/button'
 import { useExecutionStore } from '@/lib/store/execution-store'
-import { api } from '@/lib/api'
-import type { Execution, ExecutionStatus } from '@/lib/store/execution-store'
+import type { ExecutionStatus } from '@/lib/store/execution-store'
 
 const STATUSES: ExecutionStatus[] = ['success', 'failed', 'running', 'pending']
 
@@ -20,8 +19,9 @@ export default function ExecutionsPage() {
   const [copied, setCopied] = useState<string | null>(null)
 
   useEffect(() => {
-    api<{ executions: Execution[] }>('/api/executions?limit=200')
-      .then((data) => setExecutions(data.executions))
+    fetch('/api/executions')
+      .then((res) => (res.ok ? res.json() : { executions: [] }))
+      .then((data) => setExecutions(data.executions ?? []))
       .catch(() => setExecutions([]))
   }, [setExecutions])
 

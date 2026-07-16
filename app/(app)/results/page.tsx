@@ -6,37 +6,56 @@ import Link from 'next/link'
 import { format } from 'date-fns'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
-import { Copy, Download, RefreshCw, ArrowLeft, CheckCircle2, Clock, Cpu, Coins, ExternalLink } from 'lucide-react'
+import { Copy, Download, RefreshCw, ArrowLeft, CheckCircle2, Clock, Cpu, Coins, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { AppHeader } from '@/components/app/header'
 import { StatusBadge } from '@/components/app/status-badge'
-import { useExecutionStore } from '@/lib/store/execution-store'
-import { api } from '@/lib/api'
 import type { Execution } from '@/lib/store/execution-store'
+
+const POLL_INTERVAL_MS = 4000
 
 function ResultsContent() {
   const searchParams = useSearchParams()
   const id = searchParams.get('id')
-  const { currentExecution, setCurrentExecution } = useExecutionStore()
-  const [copied, setCopied] = useState(false)
+  const [exec, setExec] = useState<Execution | null>(null)
   const [loading, setLoading] = useState(true)
+  const [notFound, setNotFound] = useState(false)
+  const [copied, setCopied] = useState(false)
 
   useEffect(() => {
-    if (!id) { setLoading(false); return }
-    if (currentExecution?.id === id) { setLoading(false); return }
-    api<{ execution: Execution }>(`/api/executions/${id}`)
-      .then((data) => setCurrentExecution(data.execution))
-      .catch(() => setCurrentExecution(null))
-      .finally(() => setLoading(false))
-  }, [id, currentExecution?.id, setCurrentExecution])
+    if (!id) { setLoading(false); setNotFound(true); return }
+    let cancelled = false
+    let timer: ReturnType<typeof setTimeout> | undefined
 
-  const exec = currentExecution?.id === id ? currentExecution : null
+    const load = async () => {
+      try {
+        const res = await fetch(`/api/executions/${id}`)
+        if (cancelled) return
+        if (!res.ok) { setNotFound(true); setLoading(false); return }
+        const data = await res.json()
+        setExec(data.execution)
+        setLoading(false)
+        if (data.execution.status === 'pending' || data.execution.status === 'running') {
+          timer = setTimeout(load, POLL_INTERVAL_MS)
+        }
+      } catch {
+        if (!cancelled) timer = setTimeout(load, POLL_INTERVAL_MS)
+      }
+    }
+    load()
+    return () => { cancelled = true; if (timer) clearTimeout(timer) }
+  }, [id])
 
   if (loading) {
-    return <div className="p-6 text-muted-foreground text-sm">Loading execution…</div>
+    return (
+      <div className="p-6 text-center text-muted-foreground py-24">
+        <Loader2 className="w-6 h-6 animate-spin mx-auto mb-3" />
+        <p className="text-sm">Loading result…</p>
+      </div>
+    )
   }
 
-  if (!exec) {
+  if (notFound || !exec) {
     return (
       <div className="p-6 text-center text-muted-foreground">
         <p>Execution not found.</p>
@@ -44,6 +63,8 @@ function ResultsContent() {
       </div>
     )
   }
+
+  const inProgress = exec.status === 'pending' || exec.status === 'running'
 
   const copyOutput = () => {
     navigator.clipboard.writeText(exec.output)
@@ -85,6 +106,21 @@ function ResultsContent() {
       />
 
       <div className="p-6 space-y-5">
+        {inProgress && (
+          <div className="flex items-center gap-3 p-4 rounded-xl bg-brand/5 border border-brand/20">
+            <Loader2 className="w-4 h-4 text-brand animate-spin" />
+            <div>
+              <p className="text-sm font-medium">Your content is being generated and published…</p>
+              <p className="text-xs text-muted-foreground">This page updates automatically — no need to refresh.</p>
+            </div>
+          </div>
+        )}
+        {exec.status === 'failed' && exec.errorMessage && (
+          <div className="p-4 rounded-xl bg-destructive/10 border border-destructive/30 text-sm text-destructive">
+            {exec.errorMessage}
+          </div>
+        )}
+
         {/* Metadata cards */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           {[
@@ -110,7 +146,7 @@ function ResultsContent() {
               <h2 className="font-semibold text-sm">AI-Generated Output</h2>
               <span className="text-xs text-muted-foreground">{format(new Date(exec.createdAt), 'MMM d, yyyy HH:mm:ss')}</span>
             </div>
-            <div className="p-5 prose prose-sm dark:prose-invert max-w-none overflow-auto max-h-150
+            <div className="p-5 prose prose-sm dark:prose-invert max-w-none overflow-auto max-h-[600px]
               prose-headings:font-semibold prose-headings:text-foreground
               prose-p:text-muted-foreground prose-p:leading-relaxed
               prose-code:text-brand prose-code:bg-brand/10 prose-code:px-1 prose-code:rounded

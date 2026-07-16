@@ -1,9 +1,6 @@
-import {  pgTable,  pgEnum,  uuid,  text,  boolean,  integer,  jsonb,  timestamp,  uniqueIndex,} from 'drizzle-orm/pg-core';
-
+import { boolean, integer, jsonb, pgEnum, pgTable, text, timestamp, uuid } from 'drizzle-orm/pg-core';
 
 export const userRoleEnum = pgEnum('user_role', ['user', 'admin']);
-
-export const userStatusEnum = pgEnum('user_status', ['active', 'suspended']);
 
 export const executionStatusEnum = pgEnum('execution_status', [
   'pending',
@@ -12,20 +9,7 @@ export const executionStatusEnum = pgEnum('execution_status', [
   'failed',
 ]);
 
-// ─── Plans (token subscription tiers) ─────────────────────────────────────────
-
-export const plans = pgTable('plans', {
-  id:              uuid('id').defaultRandom().primaryKey(),
-  slug:            text('slug').notNull().unique(),
-  name:            text('name').notNull(),
-  description:     text('description').default('').notNull(),
-  priceCents:      integer('price_cents').default(0).notNull(),
-  dailyTokenLimit: integer('daily_token_limit').default(10_000).notNull(),
-  isDefault:       boolean('is_default').default(false).notNull(),
-  createdAt:       timestamp('created_at').defaultNow().notNull(),
-});
-
-// ─── Users ────────────────────────────────────────────────────────────────────
+export const mediaTypeEnum = pgEnum('media_type', ['text', 'image', 'video']);
 
 export const users = pgTable('users', {
   id:            uuid('id').defaultRandom().primaryKey(),
@@ -33,65 +17,16 @@ export const users = pgTable('users', {
   email:         text('email').notNull().unique(),
   passwordHash:  text('password_hash').notNull(),
   role:          userRoleEnum('role').default('user').notNull(),
-  status:        userStatusEnum('status').default('active').notNull(),
   emailVerified: boolean('email_verified').default(false).notNull(),
-  planId:        uuid('plan_id').references(() => plans.id, { onDelete: 'set null' }),
-  /** Extra purchased tokens, spent after the daily plan limit is exhausted. */
-  bonusTokens:   integer('bonus_tokens').default(0).notNull(),
+  status:        text('status').default('active').notNull(),
+  planId:        uuid('plan_id'),
   createdAt:     timestamp('created_at').defaultNow().notNull(),
   updatedAt:     timestamp('updated_at').defaultNow().notNull(),
 });
 
-// ─── Flows (n8n workflows for sale) ───────────────────────────────────────────
-
-export const flows = pgTable('flows', {
-  id:          uuid('id').defaultRandom().primaryKey(),
-  slug:        text('slug').notNull().unique(),
-  name:        text('name').notNull(),
-  description: text('description').default('').notNull(),
-  category:    text('category').default('automation').notNull(),
-  priceCents:  integer('price_cents').default(0).notNull(),
-  /** File name of the workflow JSON inside the N8N_Services directory. */
-  fileName:    text('file_name').notNull(),
-  isActive:    boolean('is_active').default(true).notNull(),
-  createdAt:   timestamp('created_at').defaultNow().notNull(),
-});
-
-// ─── Purchases (flow ownership) ───────────────────────────────────────────────
-
-export const purchases = pgTable(
-  'purchases',
-  {
-    id:         uuid('id').defaultRandom().primaryKey(),
-    userId:     uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
-    flowId:     uuid('flow_id').notNull().references(() => flows.id, { onDelete: 'cascade' }),
-    priceCents: integer('price_cents').default(0).notNull(),
-    createdAt:  timestamp('created_at').defaultNow().notNull(),
-  },
-  (t) => [uniqueIndex('purchases_user_flow_idx').on(t.userId, t.flowId)],
-);
-
-// ─── Daily token usage ────────────────────────────────────────────────────────
-
-export const dailyUsage = pgTable(
-  'daily_usage',
-  {
-    id:         uuid('id').defaultRandom().primaryKey(),
-    userId:     uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
-    /** Calendar day in YYYY-MM-DD (UTC). */
-    day:        text('day').notNull(),
-    tokensUsed: integer('tokens_used').default(0).notNull(),
-    updatedAt:  timestamp('updated_at').defaultNow().notNull(),
-  },
-  (t) => [uniqueIndex('daily_usage_user_day_idx').on(t.userId, t.day)],
-);
-
-// ─── Executions ───────────────────────────────────────────────────────────────
-
 export const executions = pgTable('executions', {
   id:            uuid('id').defaultRandom().primaryKey(),
   userId:        uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
-  flowId:        uuid('flow_id').references(() => flows.id, { onDelete: 'set null' }),
   workflowName:  text('workflow_name').notNull(),
   status:        executionStatusEnum('status').default('pending').notNull(),
   input:         jsonb('input').notNull().$type<Record<string, unknown>>(),
@@ -102,29 +37,74 @@ export const executions = pgTable('executions', {
   executionTime: integer('execution_time').default(0).notNull(),
   createdAt:     timestamp('created_at').defaultNow().notNull(),
   updatedAt:     timestamp('updated_at').defaultNow().notNull(),
-});
 
-// ─── Verification Tokens (email OTP / password reset) ────────────────────────
+  // Social publishing + token monitoring
+  platforms:         jsonb('platforms').default([]).notNull().$type<string[]>(),
+  mediaType:         mediaTypeEnum('media_type').default('text').notNull(),
+  promptTokens:      integer('prompt_tokens').default(0).notNull(),
+  completionTokens:  integer('completion_tokens').default(0).notNull(),
+  errorMessage:      text('error_message').default('').notNull(),
+  engineExecutionId: text('engine_execution_id').default('').notNull(),
+});
 
 export const verificationTokens = pgTable('verification_tokens', {
   id:        uuid('id').defaultRandom().primaryKey(),
   email:     text('email').notNull(),
   token:     text('token').notNull(),
-  attempts:  integer('attempts').default(0).notNull(),
   expiresAt: timestamp('expires_at').notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
 });
 
-// ─── Types ────────────────────────────────────────────────────────────────────
+export const plans = pgTable('plans', {
+  id:          uuid('id').defaultRandom().primaryKey(),
+  name:        text('name').notNull(),
+  slug:        text('slug').notNull().unique(),
+  priceCents:  integer('price_cents').default(0).notNull(),
+  maxTokens:   integer('max_tokens').default(0).notNull(),
+  description: text('description').default('').notNull(),
+  isDefault:   boolean('is_default').default(false).notNull(),
+  createdAt:   timestamp('created_at').defaultNow().notNull(),
+  updatedAt:   timestamp('updated_at').defaultNow().notNull(),
+});
 
-export type User         = typeof users.$inferSelect;
-export type NewUser      = typeof users.$inferInsert;
-export type Plan         = typeof plans.$inferSelect;
-export type Flow         = typeof flows.$inferSelect;
-export type Purchase     = typeof purchases.$inferSelect;
-export type DailyUsage   = typeof dailyUsage.$inferSelect;
-export type Execution    = typeof executions.$inferSelect;
+export const flows = pgTable('flows', {
+  id:          uuid('id').defaultRandom().primaryKey(),
+  slug:        text('slug').notNull().unique(),
+  title:       text('title').notNull(),
+  description: text('description').default('').notNull(),
+  fileName:    text('file_name').notNull(),
+  isActive:    boolean('is_active').default(true).notNull(),
+  createdAt:   timestamp('created_at').defaultNow().notNull(),
+  updatedAt:   timestamp('updated_at').defaultNow().notNull(),
+});
+
+export const purchases = pgTable('purchases', {
+  id:        uuid('id').defaultRandom().primaryKey(),
+  userId:    uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  flowId:    uuid('flow_id').notNull().references(() => flows.id, { onDelete: 'cascade' }),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+});
+
+export const dailyUsage = pgTable('daily_usage', {
+  id:        uuid('id').defaultRandom().primaryKey(),
+  userId:    uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  day:       text('day').notNull(),
+  tokensUsed: integer('tokens_used').default(0).notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
+export type User = typeof users.$inferSelect;
+export type NewUser = typeof users.$inferInsert;
+export type Execution = typeof executions.$inferSelect;
 export type NewExecution = typeof executions.$inferInsert;
+export type Plan = typeof plans.$inferSelect;
+export type NewPlan = typeof plans.$inferInsert;
+export type Flow = typeof flows.$inferSelect;
+export type NewFlow = typeof flows.$inferInsert;
+export type Purchase = typeof purchases.$inferSelect;
+export type NewPurchase = typeof purchases.$inferInsert;
+export type DailyUsage = typeof dailyUsage.$inferSelect;
+export type NewDailyUsage = typeof dailyUsage.$inferInsert;
 
 /** Safe to expose to the client — no passwordHash. */
 export type SafeUser = Omit<User, 'passwordHash'>;

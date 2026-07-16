@@ -7,11 +7,11 @@ import { cn } from '@/lib/utils'
 const FAQS = [
   {
     q: 'What is FlowAI and how does it work?',
-    a: 'FlowAI is an AI automation platform that connects your forms to n8n workflows. You submit data through our interface, we trigger your n8n webhook, and return AI-generated results — all in seconds.',
+    a: 'FlowAI is an AI content automation platform. You describe what you need through our interface, our AI engine generates the content, and it publishes straight to your social channels — all in seconds.',
   },
   {
     q: 'Do I need to know how to code?',
-    a: 'No coding required. You configure your n8n workflow visually, paste the webhook URL into FlowAI, and your automation is live. Our form builder handles the frontend automatically.',
+    a: 'No coding required. Pick your channels, describe your content, and your automation is live. FlowAI handles generation and publishing automatically.',
   },
   {
     q: 'Which AI models are supported?',
@@ -22,8 +22,8 @@ const FAQS = [
     a: 'Every execution automatically tracks the number of tokens consumed by the AI model. You can view this in your dashboard per execution, per workflow, and in aggregate analytics.',
   },
   {
-    q: 'Can I use my own n8n instance?',
-    a: 'Yes. FlowAI works with both n8n Cloud and self-hosted n8n instances. Simply enter your webhook URL in the admin settings and we\'ll route submissions there.',
+    q: 'Which platforms can I publish to?',
+    a: 'FlowAI publishes to Telegram channels, Bale, WhatsApp and Instagram, with more channels on the way. Select any combination per post.',
   },
   {
     q: 'Is there a free tier?',

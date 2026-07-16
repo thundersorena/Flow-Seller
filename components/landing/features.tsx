@@ -12,9 +12,9 @@ const FEATURES = [
   },
   {
     icon: Workflow,
-    title: 'n8n Workflow Engine',
+    title: 'Smart Automation Engine',
     description:
-      'Connect to any of your n8n workflows with a simple webhook. Build complex multi-step automations visually without writing code.',
+      'One request fans out into a full pipeline: writing, image or video generation, and multi-channel publishing — no code needed.',
   },
   {
     icon: Brain,

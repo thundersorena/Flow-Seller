@@ -3,7 +3,7 @@ import { Zap } from 'lucide-react'
 
 const LINKS = {
   Product: ['Features', 'Pricing', 'Changelog', 'Roadmap'],
-  Developers: ['Documentation', 'API Reference', 'n8n Integration', 'Examples'],
+  Developers: ['Documentation', 'API Reference', 'Integrations', 'Examples'],
   Company: ['About', 'Blog', 'Careers', 'Contact'],
   Legal: ['Privacy Policy', 'Terms of Service', 'Security', 'Cookie Policy'],
 }
@@ -22,7 +22,7 @@ export function Footer() {
               <span className="font-semibold text-foreground">FlowAI</span>
             </Link>
             <p className="text-xs text-muted-foreground leading-relaxed max-w-[160px]">
-              AI automation powered by n8n workflows.
+              AI-powered content automation for your channels.
             </p>
           </div>
 
@@ -53,7 +53,7 @@ export function Footer() {
             &copy; {new Date().getFullYear()} FlowAI. All rights reserved.
           </p>
           <p className="text-xs text-muted-foreground">
-            Built with Next.js, n8n & ❤️
+            Built with Next.js & ❤️
           </p>
         </div>
       </div>

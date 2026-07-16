@@ -1,22 +1,21 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { eq } from 'drizzle-orm';
+import { NextRequest } from 'next/server';
+import { and, eq } from 'drizzle-orm';
 import { db } from '@/lib/db';
 import { executions } from '@/src/schema';
-import { getCurrentUser } from '@/lib/auth/session';
+import { getServerUser } from '@/lib/auth/session';
 
-/** Single execution — visible to its owner or an admin. */
 export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const user = await getCurrentUser();
-  if (!user) {
-    return NextResponse.json({ error: 'Not authenticated.' }, { status: 401 });
-  }
+  const user = await getServerUser();
+  if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
 
   const { id } = await params;
 
-  const [row] = await db.select().from(executions).where(eq(executions.id, id)).limit(1);
-  if (!row || (row.userId !== user.id && user.role !== 'admin')) {
-    return NextResponse.json({ error: 'Execution not found.' }, { status: 404 });
-  }
+  const condition = user.role === 'admin'
+    ? eq(executions.id, id)
+    : and(eq(executions.id, id), eq(executions.userId, user.id));
 
-  return NextResponse.json({ execution: row });
+  const [row] = await db.select().from(executions).where(condition).limit(1);
+  if (!row) return Response.json({ error: 'Not found' }, { status: 404 });
+
+  return Response.json({ execution: row });
 }
