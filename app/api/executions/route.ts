@@ -30,8 +30,8 @@ export async function GET() {
 }
 
 export async function POST(req: NextRequest) {
-  // const user = await getServerUser();
-  // if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
+  const user = await getServerUser();
+  if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
 
   let body: unknown;
   try {
