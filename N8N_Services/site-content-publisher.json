@@ -1,0 +1,1324 @@
+{
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "site-content-publisher",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "97922c31-a8a0-4bf5-ac00-4e1c2b7c464d",
+      "name": "Site Request",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        768
+      ],
+      "webhookId": "babe9e97-c654-46af-9655-ce470f956a1a"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.body?.secret ?? $json.secret ?? \"\" }}",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              },
+              "rightValue": "4WBi9wA1fAf7f/qBRo2ZTz+F3rFVe1KIZsTPn9IZBAs="
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "3b01294c-d5a8-4aad-a2d4-8753441a740f",
+      "name": "Valid Secret?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        224,
+        768
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "exec-id",
+              "name": "executionId",
+              "value": "={{ $json.body?.executionId ?? $json.executionId ?? \"\" }}",
+              "type": "string"
+            },
+            {
+              "id": "user-prompt",
+              "name": "userPrompt",
+              "value": "={{ $json.body?.prompt ?? $json.prompt ?? \"\" }}",
+              "type": "string"
+            },
+            {
+              "id": "topic",
+              "name": "topic",
+              "value": "={{ $json.body?.topic ?? $json.topic ?? \"\" }}",
+              "type": "string"
+            },
+            {
+              "id": "tone",
+              "name": "tone",
+              "value": "={{ $json.body?.tone ?? $json.tone ?? \"Professional\" }}",
+              "type": "string"
+            },
+            {
+              "id": "length-pref",
+              "name": "lengthPref",
+              "value": "={{ $json.body?.length ?? $json.length ?? \"Medium\" }}",
+              "type": "string"
+            },
+            {
+              "id": "platforms",
+              "name": "platforms",
+              "value": "={{ $json.body?.platforms ?? $json.platforms ?? [] }}",
+              "type": "array"
+            },
+            {
+              "id": "media-type",
+              "name": "mediaType",
+              "value": "={{ $json.body?.mediaType ?? $json.mediaType ?? \"text\" }}",
+              "type": "string"
+            },
+            {
+              "id": "callback-url",
+              "name": "callbackUrl",
+              "value": "={{ $json.body?.callbackUrl ?? $json.callbackUrl ?? \"\" }}",
+              "type": "string"
+            },
+            {
+              "id": "secret",
+              "name": "secret",
+              "value": "={{ $json.body?.secret ?? $json.secret ?? \"\" }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "44e63c5d-ad40-469a-83ce-75389acc3330",
+      "name": "Normalize Request",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        448,
+        672
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { \"status\": \"accepted\", \"executionId\": $json.executionId } }}",
+        "options": {
+          "responseCode": 202
+        }
+      },
+      "id": "af37aac9-8c77-4d43-b01a-fdcb047aa6b2",
+      "name": "Acknowledge Request",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        672,
+        672
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "system-prompt",
+              "name": "systemPrompt",
+              "value": "You are a professional multi-platform social media content creator. Write original, publication-ready content. Never use placeholder text. Adapt formatting to the target platforms listed in the request. When Instagram is a target, include a strong hook in the first line, short punchy lines for mobile readability, a clear call to action, and a final line starting with \"Hashtags:\" followed by 15-25 niche-relevant hashtags (avoid banned or generic tags). When Telegram or Bale are targets, keep the post clean and readable in a channel format.",
+              "type": "string"
+            },
+            {
+              "id": "user-message",
+              "name": "userMessage",
+              "value": "=Create a {{ $json.mediaType }} social media post for these platforms: {{ $json.platforms.join(\", \") }}.\n\nTopic: {{ $json.topic }}\nTone: {{ $json.tone }}\nLength: {{ $json.lengthPref }}\n\nDetailed request from the user:\n{{ $json.userPrompt }}",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "e7678cf5-f6c3-4f52-9fb5-fd995c05da3b",
+      "name": "Build Prompt",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        896,
+        672
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.openai.com/v1/chat/completions",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "openAiApi",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { \"model\": \"gpt-5.4-mini\", \"messages\": [ { \"role\": \"system\", \"content\": $json.systemPrompt }, { \"role\": \"user\", \"content\": $json.userMessage } ] } }}",
+        "options": {}
+      },
+      "id": "360ce5c5-b4e8-4d28-ab28-f95682282202",
+      "name": "Generate Content",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        1120,
+        672
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": "UdpPvzIZuVMZSJTV",
+          "name": "OpenAI account"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $(\"Normalize Request\").item.json.callbackUrl }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-callback-secret",
+              "value": "={{ $(\"Normalize Request\").item.json.secret }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { \"executionId\": $(\"Normalize Request\").item.json.executionId, \"status\": \"failed\", \"error\": ($json.error?.message ?? $json.message ?? \"Content generation failed\"), \"n8nExecutionId\": $execution.id } }}",
+        "options": {}
+      },
+      "id": "56e6e771-823b-4d10-b316-9e63c68094e5",
+      "name": "Report Failure",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        1344,
+        768
+      ],
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "{ \"error\": \"unauthorized\" }",
+        "options": {
+          "responseCode": 401
+        }
+      },
+      "id": "10e437d4-6153-43d2-859f-a71f58e42b31",
+      "name": "Reject Unauthorized",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        448,
+        864
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "content",
+              "name": "content",
+              "value": "={{ $json.choices[0].message.content }}",
+              "type": "string"
+            },
+            {
+              "id": "model-name",
+              "name": "modelName",
+              "value": "={{ $json.model }}",
+              "type": "string"
+            },
+            {
+              "id": "prompt-tokens",
+              "name": "promptTokens",
+              "value": "={{ $json.usage.prompt_tokens }}",
+              "type": "number"
+            },
+            {
+              "id": "completion-tokens",
+              "name": "completionTokens",
+              "value": "={{ $json.usage.completion_tokens }}",
+              "type": "number"
+            },
+            {
+              "id": "total-tokens",
+              "name": "totalTokens",
+              "value": "={{ $json.usage.total_tokens }}",
+              "type": "number"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "02f82b97-e26d-4783-9f96-e79dc001f401",
+      "name": "Extract Result",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1344,
+        576
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $(\"Normalize Request\").item.json.callbackUrl }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-callback-secret",
+              "value": "={{ $(\"Normalize Request\").item.json.secret }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { \"executionId\": $(\"Normalize Request\").item.json.executionId, \"status\": \"success\", \"output\": $json.content, \"modelName\": $json.modelName, \"promptTokens\": $json.promptTokens, \"completionTokens\": $json.completionTokens, \"tokensUsed\": $json.totalTokens, \"mediaType\": $(\"Normalize Request\").item.json.mediaType, \"platforms\": $(\"Normalize Request\").item.json.platforms, \"n8nExecutionId\": $execution.id } }}",
+        "options": {}
+      },
+      "id": "39f4697c-4499-48b2-a2d5-f6acc0c9226b",
+      "name": "Save Result To Site",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        1568,
+        480
+      ],
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": false,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 1
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $(\"Normalize Request\").item.json.mediaType }}",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "rightValue": "image"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Image"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": false,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 1
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $(\"Normalize Request\").item.json.mediaType }}",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "rightValue": "video"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Video"
+            }
+          ]
+        },
+        "options": {
+          "fallbackOutput": "extra",
+          "renameFallbackOutput": "Text Only"
+        }
+      },
+      "id": "c8582386-e672-4414-8fe5-581e75c6f4e3",
+      "name": "Media Type?",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        1568,
+        1040
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "image",
+        "modelId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-image-1-mini",
+          "cachedResultName": "GPT-IMAGE-1-MINI"
+        },
+        "prompt": "=Create an eye-catching social media image for this post. No text overlays unless essential.\n\n{{ $(\"Extract Result\").item.json.content.substring(0, 1500) }}",
+        "options": {}
+      },
+      "id": "3a782c61-b431-487c-a466-e4880f367f1b",
+      "name": "Generate Image",
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 2.3,
+      "position": [
+        1792,
+        288
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": "UdpPvzIZuVMZSJTV",
+          "name": "OpenAI account"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": false,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 1
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $(\"Normalize Request\").item.json.platforms }}",
+                    "operator": {
+                      "type": "array",
+                      "operation": "contains"
+                    },
+                    "rightValue": "telegram"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Telegram"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": false,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 1
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $(\"Normalize Request\").item.json.platforms }}",
+                    "operator": {
+                      "type": "array",
+                      "operation": "contains"
+                    },
+                    "rightValue": "bale"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Bale"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": false,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 1
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $(\"Normalize Request\").item.json.platforms }}",
+                    "operator": {
+                      "type": "array",
+                      "operation": "contains"
+                    },
+                    "rightValue": "whatsapp"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "WhatsApp"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": false,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 1
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $(\"Normalize Request\").item.json.platforms }}",
+                    "operator": {
+                      "type": "array",
+                      "operation": "contains"
+                    },
+                    "rightValue": "instagram"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Instagram"
+            }
+          ]
+        },
+        "options": {
+          "allMatchingOutputs": true
+        }
+      },
+      "id": "8129f80c-a2bb-49ba-8e8f-8f978c014a18",
+      "name": "Image Platforms",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        2016,
+        256
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "sendPhoto",
+        "chatId": "<__PLACEHOLDER_VALUE__Telegram CHANNEL ID, e.g. @yourchannel or -100xxxxxxxxxx (bot must be channel admin)__>",
+        "binaryData": true,
+        "additionalFields": {
+          "caption": "={{ $(\"Extract Result\").item.json.content.substring(0, 1000) }}"
+        }
+      },
+      "id": "43fb97e1-4e46-494d-81c0-02184afd4fe2",
+      "name": "TG Channel Photo",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        2240,
+        0
+      ],
+      "webhookId": "2aa5ec05-e461-45aa-9502-f664232924ad",
+      "credentials": {
+        "telegramApi": {
+          "id": "YEgQphOtGTP4c6x1",
+          "name": "Telegram account"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "<__PLACEHOLDER_VALUE__Bale sendMessage URL: https://tapi.bale.ai/botYOUR_BALE_TOKEN/sendMessage__>",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "chat_id",
+              "value": "CHANGE_ME_BALE_CHANNEL_ID"
+            },
+            {
+              "name": "text",
+              "value": "={{ $(\"Extract Result\").item.json.content.substring(0, 3900) }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "c6ad7a39-47f2-4625-8dc8-d743669be6ac",
+      "name": "Bale Image Post",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        2240,
+        192
+      ],
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "operation": "send",
+        "phoneNumberId": "<__PLACEHOLDER_VALUE__WhatsApp Business phone number ID__>",
+        "recipientPhoneNumber": "<__PLACEHOLDER_VALUE__Recipient phone number with country code__>",
+        "messageType": "image",
+        "mediaPath": "useMedian8n",
+        "additionalFields": {
+          "mediaCaption": "={{ $(\"Extract Result\").item.json.content.substring(0, 1000) }}"
+        }
+      },
+      "id": "fdf3df37-c83e-4a15-9760-1a64cf79547d",
+      "name": "WA Image",
+      "type": "n8n-nodes-base.whatsApp",
+      "typeVersion": 1.1,
+      "position": [
+        2240,
+        384
+      ],
+      "webhookId": "8d394d24-f5b0-47b6-9166-306596a0ee53",
+      "disabled": true,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://graph.facebook.com/v21.0/YOUR_IG_BUSINESS_ACCOUNT_ID/media",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "image_url",
+              "value": "PUBLIC_IMAGE_URL_NEEDED"
+            },
+            {
+              "name": "caption",
+              "value": "={{ $(\"Extract Result\").item.json.content.substring(0, 2200) }}"
+            },
+            {
+              "name": "access_token",
+              "value": "YOUR_META_ACCESS_TOKEN"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "41e1ef8b-b2e5-42c2-a12e-443146dfb984",
+      "name": "IG Image (Setup Needed)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        2240,
+        576
+      ],
+      "disabled": true,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "resource": "video",
+        "modelId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "sora-2"
+        },
+        "prompt": "=Create a short engaging social media video based on this post:\n\n{{ $(\"Extract Result\").item.json.content.substring(0, 1500) }}",
+        "seconds": 8,
+        "options": {}
+      },
+      "id": "bcb507b1-dee4-4338-9971-82906db274c6",
+      "name": "Generate Video",
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 2.3,
+      "position": [
+        1792,
+        1056
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": "UdpPvzIZuVMZSJTV",
+          "name": "OpenAI account"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": false,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 1
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $(\"Normalize Request\").item.json.platforms }}",
+                    "operator": {
+                      "type": "array",
+                      "operation": "contains"
+                    },
+                    "rightValue": "telegram"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Telegram"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": false,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 1
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $(\"Normalize Request\").item.json.platforms }}",
+                    "operator": {
+                      "type": "array",
+                      "operation": "contains"
+                    },
+                    "rightValue": "bale"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Bale"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": false,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 1
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $(\"Normalize Request\").item.json.platforms }}",
+                    "operator": {
+                      "type": "array",
+                      "operation": "contains"
+                    },
+                    "rightValue": "whatsapp"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "WhatsApp"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": false,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 1
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $(\"Normalize Request\").item.json.platforms }}",
+                    "operator": {
+                      "type": "array",
+                      "operation": "contains"
+                    },
+                    "rightValue": "instagram"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Instagram"
+            }
+          ]
+        },
+        "options": {
+          "allMatchingOutputs": true
+        }
+      },
+      "id": "6f0a40ea-da3c-4ef2-8202-7088bed3a5f7",
+      "name": "Video Platforms",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        2016,
+        1024
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "sendVideo",
+        "chatId": "<__PLACEHOLDER_VALUE__Telegram CHANNEL ID, e.g. @yourchannel or -100xxxxxxxxxx (bot must be channel admin)__>",
+        "binaryData": true,
+        "additionalFields": {
+          "caption": "={{ $(\"Extract Result\").item.json.content.substring(0, 1000) }}"
+        }
+      },
+      "id": "d0032ad5-ddb6-4074-96df-f7be1edea627",
+      "name": "TG Channel Video",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        2240,
+        768
+      ],
+      "webhookId": "66d514f4-658a-414c-98c1-23cf782b8ace",
+      "credentials": {
+        "telegramApi": {
+          "id": "YEgQphOtGTP4c6x1",
+          "name": "Telegram account"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "<__PLACEHOLDER_VALUE__Bale sendMessage URL: https://tapi.bale.ai/botYOUR_BALE_TOKEN/sendMessage__>",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "chat_id",
+              "value": "CHANGE_ME_BALE_CHANNEL_ID"
+            },
+            {
+              "name": "text",
+              "value": "={{ $(\"Extract Result\").item.json.content.substring(0, 3900) }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "29b31788-2f8a-4367-b571-ccf13506d40e",
+      "name": "Bale Video Post",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        2240,
+        960
+      ],
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "operation": "send",
+        "phoneNumberId": "<__PLACEHOLDER_VALUE__WhatsApp Business phone number ID__>",
+        "recipientPhoneNumber": "<__PLACEHOLDER_VALUE__Recipient phone number with country code__>",
+        "messageType": "video",
+        "mediaPath": "useMedian8n",
+        "additionalFields": {
+          "mediaCaption": "={{ $(\"Extract Result\").item.json.content.substring(0, 1000) }}"
+        }
+      },
+      "id": "a510f659-fa95-47a9-a490-1da544fe14f3",
+      "name": "WA Video",
+      "type": "n8n-nodes-base.whatsApp",
+      "typeVersion": 1.1,
+      "position": [
+        2240,
+        1152
+      ],
+      "webhookId": "eaa3475f-79ed-4074-b723-28075290349f",
+      "disabled": true,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://graph.facebook.com/v21.0/YOUR_IG_BUSINESS_ACCOUNT_ID/media",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "media_type",
+              "value": "REELS"
+            },
+            {
+              "name": "video_url",
+              "value": "PUBLIC_VIDEO_URL_NEEDED"
+            },
+            {
+              "name": "caption",
+              "value": "={{ $(\"Extract Result\").item.json.content.substring(0, 2200) }}"
+            },
+            {
+              "name": "access_token",
+              "value": "YOUR_META_ACCESS_TOKEN"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "a03742d3-9f0d-4bf4-9e81-48e495891bc0",
+      "name": "IG Video (Setup Needed)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        2240,
+        1344
+      ],
+      "disabled": true,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": false,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 1
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $(\"Normalize Request\").item.json.platforms }}",
+                    "operator": {
+                      "type": "array",
+                      "operation": "contains"
+                    },
+                    "rightValue": "telegram"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Telegram"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": false,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 1
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $(\"Normalize Request\").item.json.platforms }}",
+                    "operator": {
+                      "type": "array",
+                      "operation": "contains"
+                    },
+                    "rightValue": "bale"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Bale"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": false,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 1
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $(\"Normalize Request\").item.json.platforms }}",
+                    "operator": {
+                      "type": "array",
+                      "operation": "contains"
+                    },
+                    "rightValue": "whatsapp"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "WhatsApp"
+            }
+          ]
+        },
+        "options": {
+          "allMatchingOutputs": true
+        }
+      },
+      "id": "96567907-2b34-4e87-b60a-88bdb7d85726",
+      "name": "Text Platforms",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        1792,
+        1376
+      ]
+    },
+    {
+      "parameters": {
+        "chatId": "<__PLACEHOLDER_VALUE__Telegram CHANNEL ID, e.g. @yourchannel or -100xxxxxxxxxx (bot must be channel admin)__>",
+        "text": "={{ $(\"Extract Result\").item.json.content.substring(0, 3900) }}",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "id": "d0ac3c27-91da-4c88-839f-b916c1981593",
+      "name": "TG Channel Text",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        2016,
+        1280
+      ],
+      "webhookId": "74ee9902-0bc2-43b1-b6ec-3e57a8f8d13e",
+      "credentials": {
+        "telegramApi": {
+          "id": "YEgQphOtGTP4c6x1",
+          "name": "Telegram account"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "<__PLACEHOLDER_VALUE__Bale sendMessage URL: https://tapi.bale.ai/botYOUR_BALE_TOKEN/sendMessage__>",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "chat_id",
+              "value": "CHANGE_ME_BALE_CHANNEL_ID"
+            },
+            {
+              "name": "text",
+              "value": "={{ $(\"Extract Result\").item.json.content.substring(0, 3900) }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "63a8c0fa-f7c5-4005-a701-86ac48a40806",
+      "name": "Bale Text Post",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        2016,
+        1472
+      ],
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "operation": "send",
+        "phoneNumberId": "<__PLACEHOLDER_VALUE__WhatsApp Business phone number ID__>",
+        "recipientPhoneNumber": "<__PLACEHOLDER_VALUE__Recipient phone number with country code__>",
+        "textBody": "={{ $(\"Extract Result\").item.json.content.substring(0, 4000) }}",
+        "additionalFields": {}
+      },
+      "id": "d296e76c-e4e0-49a8-a439-70a021f32321",
+      "name": "WA Text",
+      "type": "n8n-nodes-base.whatsApp",
+      "typeVersion": 1.1,
+      "position": [
+        2016,
+        1664
+      ],
+      "webhookId": "8e9546d0-2df1-4e89-a94a-deeb8d4d37b2",
+      "disabled": true,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "content": "## Site Content Publisher\nTriggered by the website (Vercel) via POST webhook.\n\nPayload: executionId, secret, prompt, topic, tone, length, platforms[], mediaType, callbackUrl.\n\nFlow: validate secret -> respond 202 -> generate content (exact token usage) -> save result back to the site DB via callback -> generate media if requested -> publish to all selected platforms.\n\nIMPORTANT: change CHANGE_ME_SHARED_SECRET in the \"Valid Secret?\" node and set the same value as CONTENT_ENGINE_SECRET in Vercel.",
+        "height": 200,
+        "width": 300,
+        "color": 4
+      },
+      "id": "5e585046-ee78-4c96-9424-b31768d4b9f5",
+      "name": "Sticky Note c016b48f",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -48,
+        -48
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## Platform setup\n- Telegram: set your CHANNEL id (@channel or -100...) in the TG nodes; the bot must be an admin of the channel. Content publishes to the channel, not the bot chat.\n- Bale: put your bot token in the URL and channel chat_id (Bale API mirrors Telegram: https://tapi.bale.ai/botTOKEN/sendMessage). Media upload to Bale can be added later; v1 posts the text.\n- WhatsApp: create a WhatsApp Business Cloud credential (Meta) and fill phone number ID + recipient.\n- Instagram: nodes are DISABLED placeholders. IG Graph API needs a public media URL + a second /media_publish call. Enable after hosting media (e.g. Vercel Blob).",
+        "height": 200,
+        "width": 300,
+        "color": 5
+      },
+      "id": "8ffe256a-5787-49e7-9593-f1d937e86d61",
+      "name": "Sticky Note e7091ac9",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -48,
+        -48
+      ]
+    }
+  ],
+  "connections": {
+    "Site Request": {
+      "main": [
+        [
+          {
+            "node": "Valid Secret?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Valid Secret?": {
+      "main": [
+        [
+          {
+            "node": "Normalize Request",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Reject Unauthorized",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize Request": {
+      "main": [
+        [
+          {
+            "node": "Acknowledge Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Acknowledge Request": {
+      "main": [
+        [
+          {
+            "node": "Build Prompt",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Prompt": {
+      "main": [
+        [
+          {
+            "node": "Generate Content",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Content": {
+      "main": [
+        [
+          {
+            "node": "Extract Result",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Report Failure",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Result": {
+      "main": [
+        [
+          {
+            "node": "Save Result To Site",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Media Type?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Media Type?": {
+      "main": [
+        [
+          {
+            "node": "Generate Image",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Generate Video",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Text Platforms",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Image": {
+      "main": [
+        [
+          {
+            "node": "Image Platforms",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Image Platforms": {
+      "main": [
+        [
+          {
+            "node": "TG Channel Photo",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Bale Image Post",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "WA Image",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "IG Image (Setup Needed)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Video": {
+      "main": [
+        [
+          {
+            "node": "Video Platforms",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Video Platforms": {
+      "main": [
+        [
+          {
+            "node": "TG Channel Video",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Bale Video Post",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "WA Video",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "IG Video (Setup Needed)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Text Platforms": {
+      "main": [
+        [
+          {
+            "node": "TG Channel Text",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Bale Text Post",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "WA Text",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "meta": {
+    "aiBuilderAssisted": true,
+    "builderVariant": "mcp",
+    "instanceId": "13fee2fce9761d43c802ab4c224608c2038205bdc92dae9a6e0ad500bd24ac73"
+  }
+}
